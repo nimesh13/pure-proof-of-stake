@@ -1,0 +1,22 @@
+{
+  "name": "delegated-proof-of-stake",
+  "version": "1.0.0",
+  "description": "A modified version of proof of stake",
+  "main": "driver.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nimesh13/delegated-proof-of-stake.git"
+  },
+  "author": "Nimesh Doolani",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/nimesh13/delegated-proof-of-stake/issues"
+  },
+  "homepage": "https://github.com/nimesh13/delegated-proof-of-stake#readme",
+  "dependencies": {
+    "spartan-gold": "^1.0.7"
+  }
+}
