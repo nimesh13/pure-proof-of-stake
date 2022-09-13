@@ -23,7 +23,6 @@ exports.getWeightedRandom = function getWeightedRandom(coinbalances) {
             right = mid;
     }
 
-    console.log(arr[left]);
     for (const [key, value] of coinbalances) {
         if (value === weights[left])
             return key;
