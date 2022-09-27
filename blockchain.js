@@ -2,8 +2,8 @@
 
 let { Blockchain } = require('spartan-gold');
 
-const ELECT_LEADER = 'ELECT_LEADER';
+const ELECT_WINNER = 'ELECT_WINNER';
 
 module.exports = class StakeBlockchain extends Blockchain {
-    static get ELECT_LEADER() { return ELECT_LEADER; }
+    static get ELECT_WINNER() { return ELECT_WINNER; }
 }
