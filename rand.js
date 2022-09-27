@@ -1,5 +1,13 @@
 "use strict"
 
+let crypto =  require('crypto');
+
+// CRYPTO settings
+const HASH_ALG = 'sha256';
+const SIG_ALG = 'RSA-SHA256';
+
+const BigInteger = require('jsbn').BigInteger;
+
 exports.getWeightedRandom = function getWeightedRandom(coinbalances) {
     let weights = Array.from(coinbalances.values());
 
@@ -31,6 +39,10 @@ exports.getWeightedRandom = function getWeightedRandom(coinbalances) {
     return null;
 }
 
-function getRandomInt(max) {
-    return Math.floor(Math.random() * max);
+function getRandomInt(genesisHash, chainLength, maxRange) {
+    const digest = crypto.createHash(HASH_ALG).update(genesisHash + chainLength).digest('hex');
+    const dividend = new BigInteger(digest, 16)
+    const divisor = new BigInteger(String.valueOf(maxRange), 10)
+
+    return dividend.remainder(divisor).intValue()
 }
