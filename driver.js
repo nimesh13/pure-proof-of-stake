@@ -3,7 +3,7 @@
 let FakeNet = require('./fakeNet.js');
 let { BlockChain, Transaction } = require('spartan-gold');
 let StakeClient = require('./client');
-let Block = require('./block');
+let StakeBlock = require('./block');
 let StakeBlockchain = require('./blockchain')
 
 console.log("Starting simulation.  This may take a moment...");
@@ -19,7 +19,7 @@ let clientArray = [alice, bob, charlie];
 
 // Creating genesis block
 let genesis = StakeBlockchain.makeGenesis({
-    blockClass: Block,
+    blockClass: StakeBlock,
     transactionClass: Transaction,
     clientBalanceMap: new Map([
         [alice, 233],
