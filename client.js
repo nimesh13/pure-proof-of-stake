@@ -29,8 +29,7 @@ module.exports = class StakeClient extends Client {
         // TODO - random pick with weight
         // coinbase reward
         
-        const winner = getWeightedRandom(this.lastConfirmedBlock.balances);
-        console.log('Winner:', test);
+        const winner = getWeightedRandom(this.lastConfirmedBlock);
         
     }
 }
