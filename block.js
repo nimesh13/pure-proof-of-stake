@@ -7,8 +7,7 @@ module.exports = class StakeBlock extends Block {
     constructor(address, prevBlock) {
         super(address, prevBlock);
 
-        this.prevBlockHash = prevBlock ? prevBlock.hashVal() : null;
-
+        this.genesisBlockHash = this.genesisBlockHash ?? this.prevBlockHash;
         this.leader = ''
     }
 }
