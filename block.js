@@ -8,6 +8,6 @@ module.exports = class StakeBlock extends Block {
         super(address, prevBlock);
 
         this.genesisBlockHash = prevBlock ? prevBlock.genesisBlockHash : this.hashVal();
-        this.leader = ''
+        this.winner = ''
     }
 }
