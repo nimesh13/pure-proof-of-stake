@@ -8,7 +8,11 @@ const SIG_ALG = 'RSA-SHA256';
 
 const BigInteger = require('jsbn').BigInteger;
 
-exports.getWeightedRandom = function getWeightedRandom(coinbalances) {
+exports.getWeightedRandom = function getWeightedRandom(lastConfirmedBlock) {
+
+    let coinbalances = lastConfirmedBlock.balances;
+    let genesisBlockHash = lastConfirmedBlock.genesisBlockHash;
+    let chainLength = lastConfirmedBlock.chainLength.toString();
     let weights = Array.from(coinbalances.values());
 
     weights.sort().reverse();
@@ -19,7 +23,7 @@ exports.getWeightedRandom = function getWeightedRandom(coinbalances) {
         arr.push(total);
     }
 
-    let target = getRandomInt(arr[arr.length - 1]);
+    let target = getRandomInt(genesisBlockHash, chainLength, arr[arr.length - 1]);
     let left = 0;
     let right = weights.length;
 
@@ -40,9 +44,10 @@ exports.getWeightedRandom = function getWeightedRandom(coinbalances) {
 }
 
 function getRandomInt(genesisHash, chainLength, maxRange) {
+
     const digest = crypto.createHash(HASH_ALG).update(genesisHash + chainLength).digest('hex');
     const dividend = new BigInteger(digest, 16)
-    const divisor = new BigInteger(String.valueOf(maxRange), 10)
+    const divisor = new BigInteger(maxRange.toString(), 10)
 
     return dividend.remainder(divisor).intValue()
 }
