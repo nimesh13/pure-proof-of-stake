@@ -1,7 +1,6 @@
 "use strict";
 
-let FakeNet = require('./fakeNet.js');
-let { BlockChain, Transaction } = require('spartan-gold');
+let { BlockChain, Transaction, FakeNet } = require('spartan-gold');
 let StakeClient = require('./client');
 let StakeBlock = require('./block');
 let StakeBlockchain = require('./blockchain')
@@ -50,4 +49,4 @@ setTimeout(() => {
     showBalances(alice);
 
     process.exit(0);
-}, 20000);
+}, 8000);
