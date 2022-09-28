@@ -3,7 +3,45 @@
 let { Blockchain } = require('spartan-gold');
 
 const ELECT_WINNER = 'ELECT_WINNER';
+const ANNOUNCE_BLOCK = 'ANNOUNCE_BLOCK';
 
 module.exports = class StakeBlockchain extends Blockchain {
     static get ELECT_WINNER() { return ELECT_WINNER; }
+    static get ANNOUNCE_BLOCK() { return ANNOUNCE_BLOCK; }
+    static get CONFIRMED_DEPTH() { return Blockchain.cfg.confirmedDepth; }
+
+    static makeBlock(...args) {
+        return new StakeBlockchain.cfg.blockClass(...args);
+    }
+
+    static deserializeBlock(o) {
+        if (o instanceof StakeBlockchain.cfg.blockClass) {
+            return o;
+        }
+
+        let b = new StakeBlockchain.cfg.blockClass();
+        b.chainLength = parseInt(o.chainLength, 10);
+        b.timestamp = o.timestamp;
+
+        if (b.isGenesisBlock()) {
+            // Balances need to be recreated and restored in a map.
+            o.balances.forEach(([clientID, amount]) => {
+                b.balances.set(clientID, amount);
+            });
+        } else {
+            b.prevBlockHash = o.prevBlockHash;
+            b.proof = o.proof;
+            b.rewardAddr = o.rewardAddr;
+            b.winner = o.winner;
+            b.genesisBlockHash = o.genesisBlockHash;
+            // Likewise, transactions need to be recreated and restored in a map.
+            b.transactions = new Map();
+            if (o.transactions) o.transactions.forEach(([txID, txJson]) => {
+                let tx = new StakeBlockchain.cfg.transactionClass(txJson);
+                b.transactions.set(txID, tx);
+            });
+        }
+
+        return b;
+    }
 }
