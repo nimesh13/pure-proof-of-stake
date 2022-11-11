@@ -2,7 +2,7 @@
 
 let { Client } = require('spartan-gold');
 let StakeBlockchain = require('./blockchain');
-let { getWeightedRandom } = require('./rand');
+let { getHighestPriorityToken } = require('./utils');
 
 let identityCount = 0;
 
@@ -28,7 +28,8 @@ module.exports = class StakeClient extends Client {
 
     electWinner() {
 
-        this.currentBlock.winner = getWeightedRandom(this.currentBlock);
+        // this.currentBlock.winner = getWeightedRandom(this.currentBlock);
+        console.log("J: ", getHighestPriorityToken(this.currentBlock, this.keyPair, this.lastBlock.balanceOf(this.address)));
         if (this.currentBlock.winner === this.address) {
             this.announceProof();
         }
