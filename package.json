@@ -17,6 +17,7 @@
   },
   "homepage": "https://github.com/nimesh13/delegated-proof-of-stake#readme",
   "dependencies": {
+    "@idena/vrf-js": "^1.0.1",
     "crypto": "^1.0.1",
     "spartan-gold": "^1.0.7"
   }

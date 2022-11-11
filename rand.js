@@ -49,5 +49,5 @@ function getRandomInt(genesisHash, chainLength, maxRange) {
     const dividend = new BigInteger(digest, 16)
     const divisor = new BigInteger(maxRange.toString(), 10)
 
-    return dividend.remainder(divisor).intValue()
+    return dividend.remainder(divisor).intValue();
 }
