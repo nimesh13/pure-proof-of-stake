@@ -4,7 +4,7 @@ const { Block, utils } = require("spartan-gold");
 
 module.exports = class StakeBlock extends Block {
 
-    constructor(rewardAddr, prevBlock) {
+    constructor(rewardAddr, prevBlock, seed) {
 
         super(rewardAddr, prevBlock);
 
@@ -15,7 +15,8 @@ module.exports = class StakeBlock extends Block {
         }
 
         this.genesisBlockHash = prevBlock ? prevBlock.genesisBlockHash : this.hashVal();
-        this.winner = ''
+        this.winner = '';
+        this.seed = seed;
     }
 
     toJSON() {

@@ -14,6 +14,12 @@ module.exports = class StakeBlockchain extends Blockchain {
     static get CONFIRMED_DEPTH() { return Blockchain.cfg.confirmedDepth; }
     static get SortitionThreshold() { return SortitionThreshold; }
 
+    static makeGenesis(...args) {
+        let g = super.makeGenesis(...args);
+        g.seed = args[0]["seed"];
+        return g;
+    }
+
     static makeBlock(...args) {
         return new StakeBlockchain.cfg.blockClass(...args);
     }

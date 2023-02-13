@@ -16,6 +16,8 @@ let charlie = new StakeClient({ name: "Charlie", net: fakeNet });
 
 let clientArray = [alice, bob, charlie];
 
+let genesisSeed = "########## THIS IS GENESIS BLOCK SEED FOR CS298 ##########";
+
 // Creating genesis block
 let genesis = StakeBlockchain.makeGenesis({
     blockClass: StakeBlock,
@@ -25,6 +27,7 @@ let genesis = StakeBlockchain.makeGenesis({
         [bob, 99],
         [charlie, 67],
     ]),
+    seed: genesisSeed,
 });
 
 function showBalances(client) {
@@ -49,4 +52,4 @@ setTimeout(() => {
     showBalances(alice);
 
     process.exit(0);
-}, 8000);
+}, 3000);
