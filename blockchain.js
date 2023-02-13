@@ -4,10 +4,12 @@ let { Blockchain } = require('spartan-gold');
 
 const ELECT_WINNER = 'ELECT_WINNER';
 const ANNOUNCE_BLOCK = 'ANNOUNCE_BLOCK';
+const ANNOUNCE_PROOF = 'ANNOUNCE_PROOF';
 
 module.exports = class StakeBlockchain extends Blockchain {
     static get ELECT_WINNER() { return ELECT_WINNER; }
     static get ANNOUNCE_BLOCK() { return ANNOUNCE_BLOCK; }
+    static get ANNOUNCE_PROOF() { return ANNOUNCE_PROOF; }
     static get CONFIRMED_DEPTH() { return Blockchain.cfg.confirmedDepth; }
 
     static makeBlock(...args) {
