@@ -4,17 +4,10 @@ const { Evaluate, ProofHoHash } = require('@idena/vrf-js');
 const BigInteger = require('jsbn').BigInteger;
 let crypto = require('crypto');
 
-var EC = require('elliptic').ec;
-var ec = new EC('curve25519');
-
-var A = ec.genKeyPair();
-var B = ec.genKeyPair();
-var C = ec.genKeyPair();
-
 // CRYPTO settings
 const HASH_ALG = 'sha256';
 
-exports.getHighestPriorityToken = function getHighestPriorityToken(
+exports.getHighestPriorityToken = function HighestPriorityToken(
     lastConfirmedBlock,
     keyPair,
     balance,
@@ -53,15 +46,15 @@ exports.getHighestPriorityToken = function getHighestPriorityToken(
     }
 
     return [hash, proof, j, maxPriorityToken];
-
 }
 
 exports.verifyHighestPriorityToken = function HighestPriorityToken(obj) {
 
-    // console.log('Public: ', obj.publicKey)
-    const hash = ProofHoHash(obj.publicKey, obj.data, obj.proof)
-    // console.log('Hash: ', hash);
-    // process.exit();
+    try { 
+        const index = ProofHoHash(obj.publicKey, obj.data, obj.proof);
+    } catch (e) { return false; }
+
+    return true;
 }
 
 function sortition(keyPair, seed, tau, role, W, w) {
@@ -115,10 +108,3 @@ function binomialCoeff(n, r) {
     // Recursive Call
     return binomialCoeff(n - 1, r - 1) + binomialCoeff(n - 1, r)
 }
-
-console.log(A.getPublic());
-console.log(B.getPublic());
-console.log(C.getPublic());
-
-// const { publicKey, privateKey } = crypto.generateKeyPairSync('ec', { 'namedCurve': 'secp128r1' });
-// console.log(privateKey);
