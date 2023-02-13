@@ -1,23 +1,29 @@
 "use strict"
 
 const { Evaluate, ProofHoHash } = require('@idena/vrf-js');
-const { hash } = require('spartan-gold/utils');
 const BigInteger = require('jsbn').BigInteger;
 let crypto = require('crypto');
+
+var EC = require('elliptic').ec;
+var ec = new EC('curve25519');
+
+var A = ec.genKeyPair();
+var B = ec.genKeyPair();
+var C = ec.genKeyPair();
 
 // CRYPTO settings
 const HASH_ALG = 'sha256';
 
-const SortitionThreshold = 2;
-
 exports.getHighestPriorityToken = function getHighestPriorityToken(
     lastConfirmedBlock,
     keyPair,
-    balance) {
+    balance,
+    sortitionThreshold,
+    seed,
+    role
+) {
 
     let coinbalances = lastConfirmedBlock.balances;
-    // let genesisBlockHash = lastConfirmedBlock.genesisBlockHash;
-    // let chainLength = lastConfirmedBlock.chainLength.toString();
 
     let weights = Array.from(coinbalances.values());
     let arr = [];
@@ -27,11 +33,18 @@ exports.getHighestPriorityToken = function getHighestPriorityToken(
         arr.push(total);
     }
 
-    const [hash, proof, j] = sortition(keyPair, total, balance);
-    if (j == 0) return null;
+    const [hash, proof, j] = sortition(
+        keyPair,
+        seed,
+        sortitionThreshold,
+        role,
+        total,
+        balance
+    );
+
+    if (j == 0) return [hash, proof, 0, null];
 
     let maxPriorityToken = new BigInteger("-1");
-
     for (const i in j) {
         let tokenHash = crypto.createHash(HASH_ALG).update(hash + i).digest('hex');
         let tokenNumber = new BigInteger(tokenHash, 16);
@@ -43,18 +56,20 @@ exports.getHighestPriorityToken = function getHighestPriorityToken(
 
 }
 
-function sortition(keyPair, W, w) {
+exports.verifyHighestPriorityToken = function HighestPriorityToken(obj) {
 
-    var data = "hello";
+    // console.log('Public: ', obj.publicKey)
+    const hash = ProofHoHash(obj.publicKey, obj.data, obj.proof)
+    // console.log('Hash: ', hash);
+    // process.exit();
+}
 
-    const [hash, proof] = Evaluate(keyPair.private, data);
-    let normalisedHash = normaliseHash(hash)
+function sortition(keyPair, seed, tau, role, W, w) {
 
-    // let genesisBlockHash = lastConfirmedBlock.genesisBlockHash;
-    // let chainLength = lastConfirmedBlock.chainLength.toString();
+    const [hash, proof] = Evaluate(keyPair.getPrivate().toArray(), seed + role);
+    let normalisedHash = normaliseHash(hash);
 
-    const p = SortitionThreshold / W;
-
+    const p = tau / W;
     let j = 0;
     let lb = 0;
     while (j <= w) {
@@ -86,28 +101,9 @@ function accB(w, j, p) {
 
 function binomial(k, w, p) {
 
-    // let combination = factorial(w) / (factorial(k) * factorial(w - k));
     let combination = binomialCoeff(w, k);
     let ans = combination * Math.pow(p, k) * Math.pow(1 - p, w - k);
     return ans;
-}
-
-function probability(k, tau) {
-    let sum = 0;
-    for (let i = 1; i <= k; i++) {
-        sum = sum + Math.pow(tau, k) * Math.pow(Math.E, -tau) / factorial(k)
-    }
-
-    return sum;
-}
-
-function factorial(n) {
-    let fact = 1;
-    for (let i = 1; i <= n; i++) {
-        fact *= i;
-    }
-
-    return fact;
 }
 
 function binomialCoeff(n, r) {
@@ -119,3 +115,10 @@ function binomialCoeff(n, r) {
     // Recursive Call
     return binomialCoeff(n - 1, r - 1) + binomialCoeff(n - 1, r)
 }
+
+console.log(A.getPublic());
+console.log(B.getPublic());
+console.log(C.getPublic());
+
+// const { publicKey, privateKey } = crypto.generateKeyPairSync('ec', { 'namedCurve': 'secp128r1' });
+// console.log(privateKey);
