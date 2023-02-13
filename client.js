@@ -15,8 +15,8 @@ module.exports = class StakeClient extends Client {
 
         // var EC = require('elliptic').ec;
         // var ec = new EC('curve25519');
-        this.keyPair =  EC.genKeyPair();
-    
+        this.keyPair = EC.genKeyPair();
+
         this.address = utils.calcAddress(this.keyPair.getPublic().encode().toString());
 
         // console.log('Public Key: ', this.keyPair.getPublic());
@@ -39,7 +39,15 @@ module.exports = class StakeClient extends Client {
 
     electWinner() {
 
-        let [data, hash, proof, j, maxPriorityToken] = getHighestPriorityToken(this.currentBlock, this.keyPair, this.lastBlock.balanceOf(this.address));
+        let [hash, proof, j, maxPriorityToken] = getHighestPriorityToken(
+            this.currentBlock,
+            this.keyPair,
+            this.lastBlock.balanceOf(this.address),
+            StakeBlockchain.SortitionThreshold,
+            "seed",
+            "proposer"
+        );
+
         if (maxPriorityToken !== null) {
             let obj = {
                 data,
@@ -50,14 +58,13 @@ module.exports = class StakeClient extends Client {
                 address: this.address,
                 publicKey: this.keyPair.getPublic()
             };
-            // this.announceProof(obj);
-            // console.log('Object: ', obj)
+            
             this.net.broadcast(StakeBlockchain.ANNOUNCE_PROOF, obj);
         }
     }
 
     announceProof(o) {
-        
+
         if (o['address'] != this.address) {
             console.log('Verifying!');
             verifyHighestPriorityToken(o);
