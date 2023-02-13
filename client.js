@@ -1,9 +1,11 @@
 "use strict";
 
-let { Client } = require('spartan-gold');
+let { Client, utils } = require('spartan-gold');
 let StakeBlockchain = require('./blockchain');
-let { getHighestPriorityToken } = require('./utils');
+let { getHighestPriorityToken, verifyHighestPriorityToken } = require('./utils');
 
+const elliptic = require('elliptic');
+const EC = new elliptic.ec('secp256k1');
 let identityCount = 0;
 
 module.exports = class StakeClient extends Client {
@@ -11,10 +13,19 @@ module.exports = class StakeClient extends Client {
     constructor(...args) {
         super(...args);
 
+        // var EC = require('elliptic').ec;
+        // var ec = new EC('curve25519');
+        this.keyPair =  EC.genKeyPair();
+    
+        this.address = utils.calcAddress(this.keyPair.getPublic().encode().toString());
+
+        // console.log('Public Key: ', this.keyPair.getPublic());
+
         this.identity = identityCount;
         identityCount += 1;
 
         this.on(StakeBlockchain.ELECT_WINNER, this.electWinner);
+        this.on(StakeBlockchain.ANNOUNCE_PROOF, this.announceProof);
         this.on(StakeBlockchain.ANNOUNCE_BLOCK, this.receiveBlock);
     }
 
@@ -28,14 +39,29 @@ module.exports = class StakeClient extends Client {
 
     electWinner() {
 
-        // this.currentBlock.winner = getWeightedRandom(this.currentBlock);
-        console.log("J: ", getHighestPriorityToken(this.currentBlock, this.keyPair, this.lastBlock.balanceOf(this.address)));
-        if (this.currentBlock.winner === this.address) {
-            this.announceProof();
+        let [data, hash, proof, j, maxPriorityToken] = getHighestPriorityToken(this.currentBlock, this.keyPair, this.lastBlock.balanceOf(this.address));
+        if (maxPriorityToken !== null) {
+            let obj = {
+                data,
+                hash,
+                proof,
+                j,
+                maxPriorityToken,
+                address: this.address,
+                publicKey: this.keyPair.getPublic()
+            };
+            // this.announceProof(obj);
+            // console.log('Object: ', obj)
+            this.net.broadcast(StakeBlockchain.ANNOUNCE_PROOF, obj);
         }
     }
 
-    announceProof() {
+    announceProof(o) {
+        
+        if (o['address'] != this.address) {
+            console.log('Verifying!');
+            verifyHighestPriorityToken(o);
+        }
         this.net.broadcast(StakeBlockchain.ANNOUNCE_BLOCK, this.currentBlock);
     }
 
