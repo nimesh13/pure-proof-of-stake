@@ -132,4 +132,29 @@ module.exports = class StakeClient extends Client {
         }
         this.lastConfirmedBlock = block;
     }
+
+    // TODO: main byzantine agreement algorithm
+    baStar() {
+        return null;
+    }
+
+    // TODO: the committee vote
+    committeeVote() {
+        return null;
+    }
+
+    // TODO: process the msgs or votes received
+    processMsg() {
+        return null;
+    }
+
+    // TODO: count votes received for every block
+    countVotes() {
+        return null;
+    }
+
+    // TODO: the reduction algorithm to reach consensus on either block or empty hash
+    reduction() {
+        return null;
+    }
 }
