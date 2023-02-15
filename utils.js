@@ -8,60 +8,46 @@ let crypto = require('crypto');
 const HASH_ALG = 'sha256';
 
 exports.getHighestPriorityToken = function HighestPriorityToken(
-    lastConfirmedBlock,
-    keyPair,
-    balance,
-    sortitionThreshold,
+    privateKey,
     seed,
-    role
+    sortitionThreshold,
+    role,
+    w,
+    W,
 ) {
 
-    let coinbalances = lastConfirmedBlock.balances;
+    const [hash, proof] = Evaluate(privateKey.toArray(), seed + role);
 
-    let weights = Array.from(coinbalances.values());
-    let arr = [];
-    let total = 0;
-    for (const weight of weights) {
-        total += weight;
-        arr.push(total);
-    }
-
-    const [hash, proof, j] = sortition(
-        keyPair,
-        seed,
+    const [j, maxPriorityToken] = sortition(
+        hash,
         sortitionThreshold,
-        role,
-        total,
-        balance
+        W,
+        w
     );
-
-    if (j == 0) return [hash, proof, 0, null];
-
-    let maxPriorityToken = new BigInteger("-1");
-    for (const i in j) {
-        let tokenHash = crypto.createHash(HASH_ALG).update(hash + i).digest('hex');
-        let tokenNumber = new BigInteger(tokenHash, 16);
-        if (tokenNumber > maxPriorityToken)
-            maxPriorityToken = tokenNumber;
-    }
 
     return [hash, proof, j, maxPriorityToken];
 }
 
-exports.verifyHighestPriorityToken = function HighestPriorityToken(obj) {
+exports.verifySort = function VerifySort(obj) {
 
-    try { 
+    try {
         const index = ProofHoHash(obj.publicKey, obj.data, obj.proof);
-    } catch (e) { return false; }
+    } catch (e) { return [-1, null]; }
 
-    return true;
+    const [j, maxPriorityToken] = sortition(
+        obj.hash,
+        obj.sortitionThreshold,
+        obj.W,
+        obj.w,
+    );
+
+    return [j, maxPriorityToken];
 }
 
-function sortition(keyPair, seed, tau, role, W, w) {
+function sortition(hash, tau, W, w) {
 
-    const [hash, proof] = Evaluate(keyPair.getPrivate().toArray(), seed + role);
     let normalisedHash = normaliseHash(hash);
-
+    
     const p = tau / W;
     let j = 0;
     let lb = 0;
@@ -72,7 +58,17 @@ function sortition(keyPair, seed, tau, role, W, w) {
         lb = ub;
     }
 
-    return [hash, proof, j];
+    if (j == 0) return [0, null];
+
+    let maxPriorityToken = new BigInteger("-1");
+    for (const i in j) {
+        let tokenHash = crypto.createHash(HASH_ALG).update(hash + i).digest('hex');
+        let tokenNumber = new BigInteger(tokenHash, 16);
+        if (tokenNumber > maxPriorityToken)
+            maxPriorityToken = tokenNumber;
+    }
+
+    return [j, maxPriorityToken];
 }
 
 function normaliseHash(hash) {
