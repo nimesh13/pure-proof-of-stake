@@ -44,6 +44,7 @@ module.exports = class StakeBlockchain extends Blockchain {
             b.rewardAddr = o.rewardAddr;
             b.winner = o.winner;
             b.genesisBlockHash = o.genesisBlockHash;
+            b.seed = o.seed;
             // Likewise, transactions need to be recreated and restored in a map.
             b.transactions = new Map();
             if (o.transactions) o.transactions.forEach(([txID, txJson]) => {
