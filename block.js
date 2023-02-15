@@ -36,6 +36,7 @@ module.exports = class StakeBlock extends Block {
             o.rewardAddr = this.rewardAddr;
             o.winner = this.winner;
             o.genesisBlockHash = this.genesisBlockHash;
+            o.seed = this.seed;
         }
         return o;
     }
@@ -79,5 +80,17 @@ module.exports = class StakeBlock extends Block {
      */
     totalRewards() {
         return this.coinbaseReward;
+    }
+
+    getTotalCoins() {
+        let coinbalances = this.balances;
+
+        let weights = Array.from(coinbalances.values());
+        let total = 0;
+        for (const weight of weights) {
+            total += weight;
+        }
+
+        return total;
     }
 }
