@@ -2,7 +2,7 @@
 
 let { Client, utils } = require('spartan-gold');
 let StakeBlockchain = require('./blockchain');
-let { getHighestPriorityToken, verifyHighestPriorityToken } = require('./utils');
+let { getHighestPriorityToken, verifySort } = require('./utils');
 
 const elliptic = require('elliptic');
 const EC = new elliptic.ec('secp256k1');
@@ -38,14 +38,16 @@ module.exports = class StakeClient extends Client {
         let seed = "seed";
         let role = "role";
         let data = seed + role;
+        let w = this.lastBlock.balanceOf(this.address);
+        let W = this.currentBlock.getTotalCoins();
 
         let [hash, proof, j, maxPriorityToken] = getHighestPriorityToken(
-            this.currentBlock,
-            this.keyPair,
-            this.lastBlock.balanceOf(this.address),
-            StakeBlockchain.SortitionThreshold,
+            this.keyPair.getPrivate(),
             seed,
+            StakeBlockchain.SortitionThreshold,
             role,
+            w,
+            W,
         );
 
         if (maxPriorityToken !== null) {
@@ -56,19 +58,22 @@ module.exports = class StakeClient extends Client {
                 j,
                 maxPriorityToken,
                 address: this.address,
-                publicKey: this.keyPair.getPublic()
+                publicKey: this.keyPair.getPublic(),
+                w,
+                W,
+                sortitionThreshold: StakeBlockchain.SortitionThreshold,
             };
 
             this.net.broadcast(StakeBlockchain.ANNOUNCE_PROOF, obj);
+        } else {
+            console.log("I cannot propose blocks. Listening for other proposals!");
         }
     }
 
     announceProof(o) {
 
         if (o['address'] != this.address) {
-            console.log('Verifying!');
-            let a = verifyHighestPriorityToken(o);
-            console.log("A: ", a);
+            let a = verifySort(o);
         }
         this.net.broadcast(StakeBlockchain.ANNOUNCE_BLOCK, this.currentBlock);
     }
