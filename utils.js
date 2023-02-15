@@ -10,7 +10,7 @@ const HASH_ALG = 'sha256';
 exports.getHighestPriorityToken = function HighestPriorityToken(
     privateKey,
     seed,
-    sortitionThreshold,
+    tau,
     role,
     w,
     W,
@@ -20,7 +20,7 @@ exports.getHighestPriorityToken = function HighestPriorityToken(
 
     const [j, maxPriorityToken] = sortition(
         hash,
-        sortitionThreshold,
+        tau,
         W,
         w
     );
@@ -36,7 +36,7 @@ exports.verifySort = function VerifySort(obj) {
 
     const [j, maxPriorityToken] = sortition(
         obj.hash,
-        obj.sortitionThreshold,
+        obj.tau,
         obj.W,
         obj.w,
     );

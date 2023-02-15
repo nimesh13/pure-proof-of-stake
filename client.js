@@ -40,11 +40,12 @@ module.exports = class StakeClient extends Client {
         let data = seed + role;
         let w = this.lastBlock.balanceOf(this.address);
         let W = this.currentBlock.getTotalCoins();
+        let tau = StakeBlockchain.SortitionThreshold;
 
         let [hash, proof, j, maxPriorityToken] = getHighestPriorityToken(
             this.keyPair.getPrivate(),
             seed,
-            StakeBlockchain.SortitionThreshold,
+            tau,
             role,
             w,
             W,
@@ -61,7 +62,7 @@ module.exports = class StakeClient extends Client {
                 publicKey: this.keyPair.getPublic(),
                 w,
                 W,
-                sortitionThreshold: StakeBlockchain.SortitionThreshold,
+                tau,
             };
 
             this.net.broadcast(StakeBlockchain.ANNOUNCE_PROOF, obj);
