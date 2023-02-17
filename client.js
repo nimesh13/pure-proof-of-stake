@@ -140,27 +140,27 @@ module.exports = class StakeClient extends Client {
     }
 
     // TODO: main byzantine agreement algorithm
-    baStar() {
+    baStar(ctx, round, block) {
         return null;
     }
 
     // TODO: the committee vote
-    committeeVote() {
+    committeeVote(ctx, round, step, tau, value) {
         return null;
     }
 
     // TODO: process the msgs or votes received
-    processMsg() {
+    processMsg(ctx, tau, m) {
         return null;
     }
 
     // TODO: count votes received for every block
-    countVotes() {
+    countVotes(ctx, round, step, T, tau, lambda) {
         return null;
     }
 
     // TODO: the reduction algorithm to reach consensus on either block or empty hash
-    reduction() {
+    reduction(ctx, round, hblock) {
         return null;
     }
 }
