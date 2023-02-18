@@ -3,6 +3,8 @@
 const { Evaluate, ProofHoHash } = require('@idena/vrf-js');
 const BigInteger = require('jsbn').BigInteger;
 let crypto = require('crypto');
+const elliptic = require('elliptic');
+const EC = new elliptic.ec('secp256k1');
 
 // CRYPTO settings
 const HASH_ALG = 'sha256';
@@ -47,7 +49,7 @@ exports.verifySort = function VerifySort(obj) {
 function sortition(hash, tau, W, w) {
 
     let normalisedHash = normaliseHash(hash);
-    
+
     const p = tau / W;
     let j = 0;
     let lb = 0;
@@ -104,3 +106,17 @@ function binomialCoeff(n, r) {
     // Recursive Call
     return binomialCoeff(n - 1, r - 1) + binomialCoeff(n - 1, r)
 }
+
+exports.sign = function (privKey, msg) {
+    let keypairTemp = EC.keyFromPrivate(privKey);
+    let str = (msg === Object(msg)) ? JSON.stringify(msg) : "" + msg;
+    const buffferMsg = Buffer.from(str);
+    return Buffer.from(keypairTemp.sign(buffferMsg).toDER()).toString('hex')
+};
+
+exports.verifySignature = function (pubKey, msg, sig) {
+    let key = EC.keyFromPublic(pubKey, 'hex');
+    let str = (msg === Object(msg)) ? JSON.stringify(msg) : "" + msg;
+    let binaryMessage = Buffer.from(str);
+    return key.verify(binaryMessage, sig);
+};
