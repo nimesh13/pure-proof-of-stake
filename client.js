@@ -3,6 +3,7 @@
 let { Client, utils } = require('spartan-gold');
 let StakeBlockchain = require('./blockchain');
 let { getHighestPriorityToken, verifySort } = require('./utils');
+const BigInteger = require('jsbn').BigInteger;
 
 const elliptic = require('elliptic');
 const EC = new elliptic.ec('secp256k1');
@@ -20,9 +21,13 @@ module.exports = class StakeClient extends Client {
         this.identity = identityCount;
         identityCount += 1;
 
-        this.on(StakeBlockchain.ELECT_WINNER, this.electWinner);
-        this.on(StakeBlockchain.ANNOUNCE_PROOF, this.announceProof);
-        this.on(StakeBlockchain.ANNOUNCE_BLOCK, this.receiveBlock);
+        this.on(StakeBlockchain.PROPOSE_BLOCK, this.proposeBlock);
+        this.on(StakeBlockchain.ANNOUNCE_PROOF, this.receiveBlock);
+        this.on(StakeBlockchain.ANNOUNCE_BLOCK, this.receiveBlock1);
+        this.on(StakeBlockchain.COMMITTEE_VOTE, this.committeeVote);
+        this.on(StakeBlockchain.GOSSIP_VOTE, this.gossipVote);
+
+        this.proposals = {};
     }
 
     /**
@@ -30,10 +35,10 @@ module.exports = class StakeClient extends Client {
     */
     initialize() {
         this.currentBlock = StakeBlockchain.makeBlock(this.address, this.lastBlock);
-        setTimeout(() => this.emit(StakeBlockchain.ELECT_WINNER), 1000);
+        setTimeout(() => this.emit(StakeBlockchain.PROPOSE_BLOCK), 1000);
     }
 
-    electWinner() {
+    proposeBlock() {
 
         let seed = "seed";
         let role = "role";
@@ -67,19 +72,26 @@ module.exports = class StakeClient extends Client {
 
             this.net.broadcast(StakeBlockchain.ANNOUNCE_PROOF, obj);
         } else {
-            console.log("I cannot propose blocks. Listening for other proposals!");
+            console.log(this.name, "I cannot propose blocks. Listening for other proposals!");
         }
     }
 
-    announceProof(o) {
+    receiveBlock(o) {
 
-        if (o['address'] != this.address) {
-            let a = verifySort(o);
+        console.log(this.name, "Collecting all proposals!");
+        let [j, maxPriorityToken] = verifySort(o);
+        if (j > 0) {
+            this.proposals[o.address] = maxPriorityToken;
         }
-        this.net.broadcast(StakeBlockchain.ANNOUNCE_BLOCK, this.currentBlock);
+
+        setTimeout(() => this.findWinningProposal(), 10);
     }
 
-    receiveBlock(block) {
+    findWinningProposal() {
+        console.log(this.name, "Reached here after timeout!");
+    }
+
+    receiveBlock1(block) {
 
         block = StakeBlockchain.deserializeBlock(block);
         let currentBlock = this.currentBlock;
@@ -146,7 +158,22 @@ module.exports = class StakeClient extends Client {
 
     // TODO: the committee vote
     committeeVote(ctx, round, step, tau, value) {
-        return null;
+
+        // check if user is in committee using Sortition
+        let role = "committee" + round + step;
+
+        const [hash, proof, j, maxPriorityToken] = getHighestPriorityToken(
+            this.keyPair.getPrivate(),
+            ctx.seed,
+            tau,
+            role,
+            ctx.weight[this.address],
+            ctx.W,
+        )
+
+        if (j > 0) {
+            this.net.broadcast(StakeBlockchain.GOSSIP_VOTE, obj);
+        }
     }
 
     // TODO: process the msgs or votes received
@@ -161,6 +188,10 @@ module.exports = class StakeClient extends Client {
 
     // TODO: the reduction algorithm to reach consensus on either block or empty hash
     reduction(ctx, round, hblock) {
+        return null;
+    }
+
+    gossipVote() {
         return null;
     }
 }
