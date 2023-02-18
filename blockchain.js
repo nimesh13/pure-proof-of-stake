@@ -2,16 +2,20 @@
 
 let { Blockchain } = require('spartan-gold');
 
-const ELECT_WINNER = 'ELECT_WINNER';
+const PROPOSE_BLOCK = 'PROPOSE_BLOCK';
 const ANNOUNCE_BLOCK = 'ANNOUNCE_BLOCK';
 const ANNOUNCE_PROOF = 'ANNOUNCE_PROOF';
+const COMMITTEE_VOTE = 'COMMITTEE_VOTE';
+const GOSSIP_VOTE = 'GOSSIP_VOTE';
 const SortitionThreshold = 2;
 
 module.exports = class StakeBlockchain extends Blockchain {
-    static get ELECT_WINNER() { return ELECT_WINNER; }
+    static get PROPOSE_BLOCK() { return PROPOSE_BLOCK; }
     static get ANNOUNCE_BLOCK() { return ANNOUNCE_BLOCK; }
     static get ANNOUNCE_PROOF() { return ANNOUNCE_PROOF; }
     static get CONFIRMED_DEPTH() { return Blockchain.cfg.confirmedDepth; }
+    static get COMMITTEE_VOTE() { return COMMITTEE_VOTE; }
+    static get GOSSIP_VOTE() { return GOSSIP_VOTE; }
     static get SortitionThreshold() { return SortitionThreshold; }
 
     static makeGenesis(...args) {
