@@ -62,8 +62,8 @@ function sortition(hash, tau, W, w) {
 
     if (j == 0) return [0, null];
 
-    let maxPriorityToken = new BigInteger("-1");
-    for (const i in j) {
+    let maxPriorityToken = new BigInteger("-1", 16);
+    for (let i = 0; i <= j; i++) {
         let tokenHash = crypto.createHash(HASH_ALG).update(hash + i).digest('hex');
         let tokenNumber = new BigInteger(tokenHash, 16);
         if (tokenNumber > maxPriorityToken)
