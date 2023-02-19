@@ -22,7 +22,7 @@ module.exports = class StakeClient extends Client {
         identityCount += 1;
 
         this.on(StakeBlockchain.PROPOSE_BLOCK, this.proposeBlock);
-        this.on(StakeBlockchain.ANNOUNCE_PROOF, this.receiveBlock);
+        this.on(StakeBlockchain.ANNOUNCE_PROOF, this.receiveProof);
         this.on(StakeBlockchain.ANNOUNCE_BLOCK, this.receiveBlock1);
         this.on(StakeBlockchain.COMMITTEE_VOTE, this.committeeVote);
         this.on(StakeBlockchain.GOSSIP_VOTE, this.gossipVote);
@@ -34,6 +34,7 @@ module.exports = class StakeClient extends Client {
     * Starts listeners and begins mining.
     */
     initialize() {
+        this.proposals = {};
         this.currentBlock = StakeBlockchain.makeBlock(this.address, this.lastBlock);
         setTimeout(() => this.emit(StakeBlockchain.PROPOSE_BLOCK), 1000);
     }
@@ -43,7 +44,7 @@ module.exports = class StakeClient extends Client {
         let seed = "seed";
         let role = "role";
         let data = seed + role;
-        let w = this.lastBlock.balanceOf(this.address);
+        let w = this.currentBlock.balanceOf(this.address);
         let W = this.currentBlock.getTotalCoins();
         let tau = StakeBlockchain.SortitionThreshold;
 
@@ -68,27 +69,39 @@ module.exports = class StakeClient extends Client {
                 w,
                 W,
                 tau,
+                blockhash: this.currentBlock.hashVal(),
             };
 
             this.net.broadcast(StakeBlockchain.ANNOUNCE_PROOF, obj);
         } else {
             console.log(this.name, "I cannot propose blocks. Listening for other proposals!");
         }
+
+        setTimeout(() => this.findWinningProposal(), 2000);
     }
 
-    receiveBlock(o) {
+    receiveProof(o) {
 
         console.log(this.name, "Collecting all proposals!");
         let [j, maxPriorityToken] = verifySort(o);
-        if (j > 0) {
-            this.proposals[o.address] = maxPriorityToken;
-        }
-
-        setTimeout(() => this.findWinningProposal(), 10);
+        if (j > 0)
+            this.proposals[o.blockhash] = maxPriorityToken;
     }
 
     findWinningProposal() {
         console.log(this.name, "Reached here after timeout!");
+        let winningToken = new BigInteger("-1");
+        let winningBlockhash = "&&&&&";
+
+        for (const [bhash, token] of Object.entries(this.proposals)) {
+            if (token > winningToken) {
+                winningToken = token;
+                winningBlockhash = bhash;
+            }
+        }
+
+        console.log(this.name, "winning block hash is: ", winningToken);
+
     }
 
     receiveBlock1(block) {
