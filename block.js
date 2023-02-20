@@ -93,4 +93,13 @@ module.exports = class StakeBlock extends Block {
 
         return total;
     }
+
+    getContext(addr, seed) {
+        return {
+            seed,
+            lastBlock: this.prevBlockHash,
+            w: this.balanceOf(addr),
+            W: this.getTotalCoins(),
+        };
+    }
 }
