@@ -52,4 +52,4 @@ setTimeout(() => {
     showBalances(alice);
 
     process.exit(0);
-}, 3000);
+}, 15000);
