@@ -70,6 +70,7 @@ module.exports = class StakeClient extends Client {
                 W,
                 tau,
                 blockhash: this.currentBlock.hashVal(),
+                seed,
             };
 
             this.net.broadcast(StakeBlockchain.ANNOUNCE_PROOF, obj);
@@ -85,23 +86,31 @@ module.exports = class StakeClient extends Client {
         console.log(this.name, "Collecting all proposals!");
         let [j, maxPriorityToken] = verifySort(o);
         if (j > 0)
-            this.proposals[o.blockhash] = maxPriorityToken;
+            this.proposals[o.blockhash] = o;
     }
 
     findWinningProposal() {
         console.log(this.name, "Reached here after timeout!");
         let winningToken = new BigInteger("-1");
+        let winningProp = {};
         let winningBlockhash = "&&&&&";
 
-        for (const [bhash, token] of Object.entries(this.proposals)) {
-            if (token > winningToken) {
-                winningToken = token;
+        for (const [bhash, prop_obj] of Object.entries(this.proposals)) {
+            if (prop_obj.maxPriorityToken > winningToken) {
+                winningToken = prop_obj.maxPriorityToken;
+                winningProp = prop_obj;
                 winningBlockhash = bhash;
             }
         }
+        let ctx = this.currentBlock.getContext(this.address, winningProp.seed);
 
-        console.log(this.name, "winning block hash is: ", winningToken);
-
+        setTimeout(() => this.baStar(
+            ctx,
+            this.currentBlock.chainLength,
+            winningBlockhash
+        ),
+            0
+        );
     }
 
     receiveBlock1(block) {
@@ -165,8 +174,14 @@ module.exports = class StakeClient extends Client {
     }
 
     // TODO: main byzantine agreement algorithm
-    baStar(ctx, round, block) {
-        return null;
+    baStar(ctx, round, hblock) {
+        hblock = this.reduction(ctx, round, hblock);
+
+        // Note: variable hblock returned from reduction is same as what 
+        // BA Star was called with. For Binary BA* we use the hblock
+        // returned from the Reduction step and not the original
+        // argument.
+        let hblockStar = this.binaryBAStar(ctx, round, hblock);
     }
 
     // TODO: the committee vote
@@ -180,7 +195,7 @@ module.exports = class StakeClient extends Client {
             ctx.seed,
             tau,
             role,
-            ctx.weight[this.address],
+            ctx.w,
             ctx.W,
         )
 
@@ -201,6 +216,12 @@ module.exports = class StakeClient extends Client {
 
     // TODO: the reduction algorithm to reach consensus on either block or empty hash
     reduction(ctx, round, hblock) {
+        console.log("Reduction step!!!!");
+        return null;
+    }
+
+    // TODO: binary BA star algorithm to finish the consensus.
+    binaryBAStar(ctx, round, hblock) {
         return null;
     }
 
