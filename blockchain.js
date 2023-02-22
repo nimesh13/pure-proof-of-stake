@@ -8,6 +8,7 @@ const ANNOUNCE_PROOF = 'ANNOUNCE_PROOF';
 const COMMITTEE_VOTE = 'COMMITTEE_VOTE';
 const GOSSIP_VOTE = 'GOSSIP_VOTE';
 const SortitionThreshold = 2;
+const CommitteeSize = 5;
 
 module.exports = class StakeBlockchain extends Blockchain {
     static get PROPOSE_BLOCK() { return PROPOSE_BLOCK; }
@@ -17,6 +18,7 @@ module.exports = class StakeBlockchain extends Blockchain {
     static get COMMITTEE_VOTE() { return COMMITTEE_VOTE; }
     static get GOSSIP_VOTE() { return GOSSIP_VOTE; }
     static get SortitionThreshold() { return SortitionThreshold; }
+    static get CommitteeSize() { return CommitteeSize; }
 
     static makeGenesis(...args) {
         let g = super.makeGenesis(...args);
