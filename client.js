@@ -2,7 +2,7 @@
 
 let { Client, utils } = require('spartan-gold');
 let StakeBlockchain = require('./blockchain');
-let { getHighestPriorityToken, verifySort } = require('./utils');
+let { getHighestPriorityToken, verifySort, sign, verifySignature } = require('./utils');
 const BigInteger = require('jsbn').BigInteger;
 
 const elliptic = require('elliptic');
@@ -25,7 +25,7 @@ module.exports = class StakeClient extends Client {
         this.on(StakeBlockchain.ANNOUNCE_PROOF, this.receiveProof);
         this.on(StakeBlockchain.ANNOUNCE_BLOCK, this.receiveBlock1);
         this.on(StakeBlockchain.COMMITTEE_VOTE, this.committeeVote);
-        this.on(StakeBlockchain.GOSSIP_VOTE, this.gossipVote);
+        this.on(StakeBlockchain.GOSSIP_VOTE, this.receiveVote);
 
         this.proposals = {};
     }
@@ -184,6 +184,19 @@ module.exports = class StakeClient extends Client {
         let hblockStar = this.binaryBAStar(ctx, round, hblock);
     }
 
+    // TODO: the reduction algorithm to reach consensus on either block or empty hash
+    reduction(ctx, round, hblock) {
+        console.log("Reduction step!!!!");
+        this.committeeVote(ctx,
+            round,
+            "REDUCTION_ONE",
+            StakeBlockchain.CommitteeSize,
+            hblock
+        );
+
+        return null;
+    }
+
     // TODO: the committee vote
     committeeVote(ctx, round, step, tau, value) {
 
@@ -200,12 +213,36 @@ module.exports = class StakeClient extends Client {
         )
 
         if (j > 0) {
+            console.log(this.name, "I am a committee member!!");
+            let msg = {
+                round,
+                step,
+                hash,
+                proof,
+                lastBlock: ctx.lastBlock,
+                value,
+            }
+
+            let obj = {
+                pk: this.keyPair.getPublic(),
+                msg,
+                sig: sign(this.keyPair.getPrivate(), msg)
+            }
+
             this.net.broadcast(StakeBlockchain.GOSSIP_VOTE, obj);
         }
     }
 
     // TODO: process the msgs or votes received
     processMsg(ctx, tau, m) {
+        console.log(typeof m)
+        let { pk, msg, sig } = m;
+        if ( !verifySignature(pk, msg, sig) ) {
+            console.log(this.name, "Invalid signature!");
+            return [0, null, null];
+        } else {
+            console.log(this.name, "Vote is valid!!");
+        }
         return null;
     }
 
@@ -214,18 +251,13 @@ module.exports = class StakeClient extends Client {
         return null;
     }
 
-    // TODO: the reduction algorithm to reach consensus on either block or empty hash
-    reduction(ctx, round, hblock) {
-        console.log("Reduction step!!!!");
-        return null;
-    }
-
     // TODO: binary BA star algorithm to finish the consensus.
     binaryBAStar(ctx, round, hblock) {
         return null;
     }
 
-    gossipVote() {
-        return null;
+    receiveVote(o) {
+        console.log(this.name, "Received vote: ");
+        return this.processMsg(o);
     }
 }
