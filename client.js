@@ -28,6 +28,7 @@ module.exports = class StakeClient extends Client {
         this.on(StakeBlockchain.GOSSIP_VOTE, this.receiveVote);
 
         this.proposals = {};
+        this.ctx = null;
     }
 
     /**
@@ -36,21 +37,23 @@ module.exports = class StakeClient extends Client {
     initialize() {
         this.proposals = {};
         this.currentBlock = StakeBlockchain.makeBlock(this.address, this.lastBlock);
+        let seed = "seed";
+        this.ctx = this.currentBlock.getContext(seed);
+
         setTimeout(() => this.emit(StakeBlockchain.PROPOSE_BLOCK), 1000);
     }
 
     proposeBlock() {
 
-        let seed = "seed";
-        let role = "role";
-        let data = seed + role;
+        let role = "proposer";
+        let data = this.ctx.seed + role;
         let w = this.currentBlock.balanceOf(this.address);
         let W = this.currentBlock.getTotalCoins();
         let tau = StakeBlockchain.SortitionThreshold;
 
         let [hash, proof, j, maxPriorityToken] = getHighestPriorityToken(
             this.keyPair.getPrivate(),
-            seed,
+            this.ctx.seed,
             tau,
             role,
             w,
@@ -70,7 +73,7 @@ module.exports = class StakeClient extends Client {
                 W,
                 tau,
                 blockhash: this.currentBlock.hashVal(),
-                seed,
+                seed: this.ctx.seed,
             };
 
             this.net.broadcast(StakeBlockchain.ANNOUNCE_PROOF, obj);
@@ -102,10 +105,8 @@ module.exports = class StakeClient extends Client {
                 winningBlockhash = bhash;
             }
         }
-        let ctx = this.currentBlock.getContext(this.address, winningProp.seed);
 
         setTimeout(() => this.baStar(
-            ctx,
             this.currentBlock.chainLength,
             winningBlockhash
         ),
@@ -174,20 +175,20 @@ module.exports = class StakeClient extends Client {
     }
 
     // TODO: main byzantine agreement algorithm
-    baStar(ctx, round, hblock) {
-        hblock = this.reduction(ctx, round, hblock);
+    baStar(round, hblock) {
+        hblock = this.reduction(round, hblock);
 
         // Note: variable hblock returned from reduction is same as what 
         // BA Star was called with. For Binary BA* we use the hblock
         // returned from the Reduction step and not the original
         // argument.
-        let hblockStar = this.binaryBAStar(ctx, round, hblock);
+        let hblockStar = this.binaryBAStar(round, hblock);
     }
 
     // TODO: the reduction algorithm to reach consensus on either block or empty hash
-    reduction(ctx, round, hblock) {
+    reduction(round, hblock) {
         console.log("Reduction step!!!!");
-        this.committeeVote(ctx,
+        this.committeeVote(
             round,
             "REDUCTION_ONE",
             StakeBlockchain.CommitteeSize,
@@ -198,66 +199,98 @@ module.exports = class StakeClient extends Client {
     }
 
     // TODO: the committee vote
-    committeeVote(ctx, round, step, tau, value) {
+    committeeVote(round, step, tau, value) {
 
         // check if user is in committee using Sortition
         let role = "committee" + round + step;
 
-        const [hash, proof, j, maxPriorityToken] = getHighestPriorityToken(
+        const [hash, proof, j, _] = getHighestPriorityToken(
             this.keyPair.getPrivate(),
-            ctx.seed,
+            this.ctx.seed,
             tau,
             role,
-            ctx.w,
-            ctx.W,
+            this.ctx.w.get(this.address),
+            this.ctx.W,
         )
+
+        console.log("Voting role: ", role)
 
         if (j > 0) {
             console.log(this.name, "I am a committee member!!");
             let msg = {
                 round,
                 step,
-                hash,
+                sorthash: hash,
                 proof,
-                lastBlock: ctx.lastBlock,
+                lastBlock: this.ctx.lastBlock,
                 value,
+                addr: this.address,
+                name: this.name,
             }
 
             let obj = {
                 pk: this.keyPair.getPublic(),
                 msg,
                 sig: sign(this.keyPair.getPrivate(), msg)
-            }
+            };
 
             this.net.broadcast(StakeBlockchain.GOSSIP_VOTE, obj);
         }
     }
 
     // TODO: process the msgs or votes received
-    processMsg(ctx, tau, m) {
-        console.log(typeof m)
+    processMsg(tau, m) {
         let { pk, msg, sig } = m;
-        if ( !verifySignature(pk, msg, sig) ) {
+
+        // console.log("Message: ", msg)
+        if (!verifySignature(pk, msg, sig)) {
             console.log(this.name, "Invalid signature!");
             return [0, null, null];
-        } else {
-            console.log(this.name, "Vote is valid!!");
         }
-        return null;
+        console.log(this.name, "Vote is valid!!");
+
+        let { round, step, sorthash, proof, lastBlock, value, addr } = msg;
+
+        // discard messages that do not extend this chain
+        if (lastBlock != this.ctx.lastBlock) {
+            console.log(this.name, "Message doesn't extend this chain!");
+            return [0, null, null];
+        }
+
+        // check if user is in committee using Sortition
+        let role = "committee" + round + step;
+
+        let obj = {
+            hash: sorthash,
+            proof,
+            publicKey: pk,
+            tau,
+            w: this.ctx.w.get(addr),
+            W: this.ctx.W,
+            data: this.ctx.seed + role,
+        };
+
+        let [j, _] = verifySort(obj);
+
+        return [j, value, sorthash];
     }
 
     // TODO: count votes received for every block
-    countVotes(ctx, round, step, T, tau, lambda) {
+    countVotes(round, step, T, tau, lambda) {
         return null;
     }
 
     // TODO: binary BA star algorithm to finish the consensus.
-    binaryBAStar(ctx, round, hblock) {
+    binaryBAStar(round, hblock) {
         return null;
     }
 
     receiveVote(o) {
-        console.log(this.name, "Received vote: ");
-        return this.processMsg(o);
+        // console.log(this.name, "Received vote: ", o);
+        let [votes, value, hash] = this.processMsg(
+            StakeBlockchain.CommitteeSize,
+            o
+        );
+        console.log(this.name, "VoteS: ", votes)
     }
 }
