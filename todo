@@ -1,3 +1,4 @@
 calculate seed for every round
 use built in logger
 proposal class
+add ctx as local variable instead of global state
