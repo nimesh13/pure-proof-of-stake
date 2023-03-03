@@ -29,6 +29,7 @@ module.exports = class StakeClient extends Client {
 
         this.proposals = {};
         this.ctx = null;
+        this.incomingMsgs = new Map();
     }
 
     /**
@@ -211,9 +212,7 @@ module.exports = class StakeClient extends Client {
             role,
             this.ctx.w.get(this.address),
             this.ctx.W,
-        )
-
-        console.log("Voting role: ", role)
+        );
 
         if (j > 0) {
             console.log(this.name, "I am a committee member!!");
@@ -225,13 +224,15 @@ module.exports = class StakeClient extends Client {
                 lastBlock: this.ctx.lastBlock,
                 value,
                 addr: this.address,
-                name: this.name,
             }
 
             let obj = {
                 pk: this.keyPair.getPublic(),
                 msg,
-                sig: sign(this.keyPair.getPrivate(), msg)
+                sig: sign(this.keyPair.getPrivate(), msg),
+                voter: this.name,
+                round,
+                step,
             };
 
             this.net.broadcast(StakeBlockchain.GOSSIP_VOTE, obj);
@@ -285,12 +286,17 @@ module.exports = class StakeClient extends Client {
         return null;
     }
 
-    receiveVote(o) {
-        // console.log(this.name, "Received vote: ", o);
-        let [votes, value, hash] = this.processMsg(
-            StakeBlockchain.CommitteeSize,
-            o
-        );
-        console.log(this.name, "VoteS: ", votes)
+    receiveVote(vote) {
+        let { voter, round, step } = vote;
+        console.log(this.name, "Received vote from: ", voter);
+
+        if (!this.incomingMsgs.has(round)) {
+            this.incomingMsgs.set(round, new Map());
+        }
+        if (!this.incomingMsgs.get(round).has(step)) {
+            this.incomingMsgs.get(round).set(step, []);
+        }
+
+        this.incomingMsgs.get(round).get(step).push(vote);
     }
 }
