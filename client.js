@@ -230,6 +230,7 @@ module.exports = class StakeClient extends Client {
                 pk: this.keyPair.getPublic(),
                 msg,
                 sig: sign(this.keyPair.getPrivate(), msg),
+                addr: this.address,
                 voter: this.name,
                 round,
                 step,
@@ -278,7 +279,28 @@ module.exports = class StakeClient extends Client {
 
     // TODO: count votes received for every block
     countVotes(round, step, T, tau, lambda) {
-        return null;
+        let start = new Date().getTime();
+        let counts = {};
+        let voters = new Set();
+
+        const msgs = this.incomingMsgs.get(round).get(step)[Symbol.iterator]();
+
+        while (true) {
+            let m = msgs.next().value();
+            if (m === undefined) {
+                let now = new Date().getTime();
+                if (now > start + lambda) return "TIMEOUT";
+            } else {
+                let { addr } = m;
+                let [votes, value, sorthash] = this.processMsg(m);
+                if (voters.has(addr) || votes < 1)
+                    continue;
+                voters.add(addr);
+                counts[value] = (counts[value] + votes) || votes;
+                if (counts[value] > T * tau)
+                    return value;
+            }
+        }
     }
 
     // TODO: binary BA star algorithm to finish the consensus.
