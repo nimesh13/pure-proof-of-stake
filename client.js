@@ -188,13 +188,23 @@ module.exports = class StakeClient extends Client {
 
     // TODO: the reduction algorithm to reach consensus on either block or empty hash
     reduction(round, hblock) {
-        console.log("Reduction step!!!!");
+        console.log(this.name, "Reduction step!!!!");
         this.committeeVote(
             round,
             "REDUCTION_ONE",
             StakeBlockchain.CommitteeSize,
             hblock
         );
+
+        let hblock1 = this.countVotes(
+            round,
+            "REDUCTION_ONE",
+            0.685,
+            StakeBlockchain.CommitteeSize,
+            3 + 1,
+        );
+
+        console.log(this.name, "HBLOCK1: ", hblock1);
 
         return null;
     }
@@ -283,16 +293,24 @@ module.exports = class StakeClient extends Client {
         let counts = {};
         let voters = new Set();
 
+        while (true) {
+            let now = new Date().getTime();
+            if (now > start + lambda) return "TIMEOUT";
+            if (this.incomingMsgs.has(round) && this.incomingMsgs.get(round).has(step))
+                break;
+        }
         const msgs = this.incomingMsgs.get(round).get(step)[Symbol.iterator]();
 
         while (true) {
-            let m = msgs.next().value();
+            let m = msgs.next().value;
+
             if (m === undefined) {
                 let now = new Date().getTime();
                 if (now > start + lambda) return "TIMEOUT";
             } else {
                 let { addr } = m;
-                let [votes, value, sorthash] = this.processMsg(m);
+                // console.log("Message is", m)
+                let [votes, value, sorthash] = this.processMsg(tau, m);
                 if (voters.has(addr) || votes < 1)
                     continue;
                 voters.add(addr);
