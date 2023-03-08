@@ -351,34 +351,30 @@ module.exports = class StakeClient extends Client {
 
     // TODO: count votes received for every block
     countVotes(round, step, T, tau, lambda) {
-        let start = new Date().getTime();
         let counts = {};
         let voters = new Set();
 
-        while (true) {
-            let now = new Date().getTime();
-            if (now > start + lambda) return "TIMEOUT";
-            if (this.incomingMsgs.has(round) && this.incomingMsgs.get(round).has(step))
-                break;
-        }
-        const msgs = this.incomingMsgs.get(round).get(step)[Symbol.iterator]();
+        if (!this.incomingMsgs.has(round) || !this.incomingMsgs.get(round).has(step)) {
+            return "TIMEOUT";
+        } else {
+            const msgs = this.incomingMsgs.get(round).get(step)[Symbol.iterator]();
 
-        while (true) {
-            let m = msgs.next().value;
+            while (true) {
+                let m = msgs.next().value;
 
-            if (m === undefined) {
-                let now = new Date().getTime();
-                if (now > start + lambda) return "TIMEOUT";
-            } else {
-                let { addr } = m;
-                // console.log("Message is", m)
-                let [votes, value, sorthash] = this.processMsg(tau, m);
-                if (voters.has(addr) || votes < 1)
-                    continue;
-                voters.add(addr);
-                counts[value] = (counts[value] + votes) || votes;
-                if (counts[value] > T * tau)
-                    return value;
+                if (m === undefined) {
+                    return "TIMEOUT";
+                } else {
+                    let { addr } = m;
+                    let [votes, value, sorthash] = this.processMsg(tau, m);
+                    if (voters.has(addr) || votes < 1)
+                        continue;
+                    voters.add(addr);
+                    counts[value] = (counts[value] + votes) || votes;
+                    if (counts[value] > T * tau) {
+                        return value;
+                    }
+                }
             }
         }
     }
