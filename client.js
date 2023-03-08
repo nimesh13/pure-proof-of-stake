@@ -177,7 +177,9 @@ module.exports = class StakeClient extends Client {
 
     // TODO: main byzantine agreement algorithm
     baStar(round, hblock) {
-        hblock = this.reduction(round, hblock);
+        hblock = this.reductionOne(round, hblock);
+
+        // console.log(this.name, "REDUCED VALUE: ", hblock);
 
         // Note: variable hblock returned from reduction is same as what 
         // BA Star was called with. For Binary BA* we use the hblock
@@ -186,8 +188,7 @@ module.exports = class StakeClient extends Client {
         let hblockStar = this.binaryBAStar(round, hblock);
     }
 
-    // TODO: the reduction algorithm to reach consensus on either block or empty hash
-    reduction(round, hblock) {
+    reductionOne(round, hblock) {
         console.log(this.name, "Reduction step!!!!");
         this.committeeVote(
             round,
@@ -196,17 +197,78 @@ module.exports = class StakeClient extends Client {
             hblock
         );
 
+        setTimeout(() => {
+            this.countReduceOne(
+                round,
+                "REDUCTION_ONE",
+                0.685,
+                StakeBlockchain.CommitteeSize,
+                3 + 2,
+            );
+        }, 4000);
+    }
+
+    countReduceOne(round, step, T, tau, lambda) {
         let hblock1 = this.countVotes(
             round,
-            "REDUCTION_ONE",
-            0.685,
-            StakeBlockchain.CommitteeSize,
-            3 + 1,
+            step,
+            T,
+            tau,
+            lambda,
         );
 
-        console.log(this.name, "HBLOCK1: ", hblock1);
+        console.log(this.name, "REDUCTION ONE:", hblock1);
 
-        return null;
+        setTimeout(() => {
+            this.reductionTwo(
+                round,
+                "REDUCTION_TWO",
+                StakeBlockchain.CommitteeSize,
+                hblock1,
+            );
+        }, 4000);
+
+    }
+
+    reductionTwo(round, step, tau, hblock1) {
+        let emptyHash = " THIS IS EMPTY HASH!!!!";
+        if (hblock1 == "TIMEOUT") {
+            this.committeeVote(
+                round,
+                step,
+                tau,
+                emptyHash
+            );
+        } else {
+            this.committeeVote(
+                round,
+                step,
+                tau,
+                hblock1
+            );
+        }
+
+        setTimeout(() => {
+            this.countReduceTwo(
+                round,
+                "REDUCTION_TWO",
+                0.685,
+                StakeBlockchain.CommitteeSize,
+                3 + 2,
+            );
+        }, 4000);
+    }
+
+    countReduceTwo(round, step, T, tau, lambda) {
+        let hblock2 = this.countVotes(
+            round,
+            step,
+            T,
+            tau,
+            lambda,
+        );
+
+        console.log(this.name, "REDUCTION TWO:", hblock2);
     }
 
     // TODO: the committee vote
