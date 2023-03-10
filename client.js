@@ -115,79 +115,6 @@ module.exports = class StakeClient extends Client {
         );
     }
 
-    receiveBlock1(block) {
-
-        block = StakeBlockchain.deserializeBlock(block);
-        let currentBlock = this.currentBlock;
-
-        if (currentBlock.winner === block.winner) {
-
-            // Storing the block.
-
-            // Make sure that we have the previous blocks, unless it is the genesis block.
-            // If we don't have the previous blocks, request the missing blocks and exit.
-            let prevBlock = this.blocks.get(block.prevBlockHash);
-            if (!prevBlock && !block.isGenesisBlock()) {
-                let stuckBlocks = this.pendingBlocks.get(block.prevBlockHash);
-
-                // If this is the first time that we have identified this block as missing,
-                // send out a request for the block.
-                if (stuckBlocks === undefined) {
-                    this.requestMissingBlock(block);
-                    stuckBlocks = new Set();
-                }
-                stuckBlocks.add(block);
-
-                this.pendingBlocks.set(block.prevBlockHash, stuckBlocks);
-                return null;
-            }
-
-            if (!block.isGenesisBlock()) {
-                // Verify the block, and store it if everything looks good.
-                // This code will trigger an exception if there are any invalid transactions.
-                let success = block.rerun(prevBlock);
-                if (!success) return null;
-            }
-
-            this.blocks.set(block.id, block);
-
-            // If it is a better block than the client currently has, set that
-            // as the new currentBlock, and update the lastConfirmedBlock.
-            if (this.lastBlock.chainLength < block.chainLength) {
-                this.lastBlock = block;
-                this.setLastConfirmed();
-            }
-
-            this.initialize();
-        }
-    }
-
-    setLastConfirmed() {
-        let block = this.lastBlock;
-
-        let confirmedBlockHeight = block.chainLength - StakeBlockchain.CONFIRMED_DEPTH;
-        if (confirmedBlockHeight < 0) {
-            confirmedBlockHeight = 0;
-        }
-        while (block.chainLength > confirmedBlockHeight) {
-            block = this.blocks.get(block.prevBlockHash);
-        }
-        this.lastConfirmedBlock = block;
-    }
-
-    // TODO: main byzantine agreement algorithm
-    baStar(round, hblock) {
-        hblock = this.reductionOne(round, hblock);
-
-        // console.log(this.name, "REDUCED VALUE: ", hblock);
-
-        // Note: variable hblock returned from reduction is same as what 
-        // BA Star was called with. For Binary BA* we use the hblock
-        // returned from the Reduction step and not the original
-        // argument.
-        let hblockStar = this.binaryBAStar(round, hblock);
-    }
-
     reductionOne(round, hblock) {
         console.log(this.name, "Reduction step!!!!");
         this.committeeVote(
@@ -268,7 +195,96 @@ module.exports = class StakeClient extends Client {
             lambda,
         );
 
+        let emptyHash = " THIS IS EMPTY HASH!!!!";
+
+        if (hblock2 == "TIMEOUT") hblock2 = emptyHash;
+
         console.log(this.name, "REDUCTION TWO:", hblock2);
+
+        setTimeout(() => {
+            this.binaryBAStarStageOne(round, hblock2);
+        }, 0)
+    }
+
+    // TODO: binary BA star algorithm to finish the consensus.
+    binaryBAStarStageOne(round, hblock) {
+        let step = 1;
+        let r = hblock;
+        console.log(this.name, "STARTING BINARY BA STAR STAGE 1");
+
+        this.committeeVote(
+            round,
+            step,
+            StakeBlockchain.CommitteeSize,
+            r
+        );
+
+        setTimeout(() => {
+            this.binaryBAStarCountStageOne(
+                round,
+                step,
+                0.685,
+                StakeBlockchain.CommitteeSize,
+                r,
+                3 + 2,
+            );
+        },
+            4);
+    }
+
+    binaryBAStarCountStageOne(round, step, T, tau, hblock, lambda) {
+        let emptyHash = " THIS IS EMPTY HASH!!!!";
+
+        let r = this.countVotes(
+            round,
+            step,
+            T,
+            tau,
+            lambda,
+        );
+
+        if (r == "TIMEOUT") {
+            r = hblock;
+            console.log(this.name, "TIMED OUT!!");
+        } else if (r != emptyHash) {
+            for (let s = step + 1; s <= step + 3; s++) {
+                this.committeeVote(
+                    round,
+                    s,
+                    tau,
+                    r
+                );
+            }
+
+            if (step == 1) {
+                this.committeeVote(
+                    round,
+                    'FINAL',
+                    tau,
+                    r
+                );
+                this.hblockStar = r;
+                setTimeout(() => {
+                    this.BAStar(round);
+                }, 4)
+            }
+        }
+        step++;
+    }
+
+    BAStar(round) {
+        let r = this.countVotes(
+            round,
+            'FINAL',
+            0.685,
+            StakeBlockchain.CommitteeSize,
+            3 + 2,
+        );
+
+        if (this.hblockStar == r)
+            console.log(this.name, "FINAL CONSENSUS REACHED!!!");
+        else console.log(this.name, "TENTATIVE CONSENSUS REACHED!!!");
+        return;
     }
 
     // TODO: the committee vote
