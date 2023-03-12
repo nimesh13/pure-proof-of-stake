@@ -8,3 +8,4 @@ create empty_hash from previous blocks
 drop msgs randomly
 comments
 what happens when nobody is proposing blocks - &&&& is passed around
+count votes to start new round
