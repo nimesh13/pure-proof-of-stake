@@ -369,7 +369,7 @@ module.exports = class StakeClient extends Client {
 
         if (r == 'TIMEOUT') {
             console.log(this.name, "STAGE 3 TIMED OUT!!");
-            if (this.commonCoin(round, steo, tau) == 0)
+            if (this.commonCoin(round, step, tau) == 0)
                 r = hblock;
             else r = emptyHash;
         }
