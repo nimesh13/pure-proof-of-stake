@@ -273,12 +273,12 @@ module.exports = class StakeClient extends Client {
         }
         step++;
         setTimeout(() =>
-            this.binaryBAStarStageTwo(round, r, step),
+            this.binaryBAStarStageTwo(round, r, hblock, step),
             0
         );
     }
 
-    binaryBAStarStageTwo(round, r, step) {
+    binaryBAStarStageTwo(round, r, hblock, step) {
         console.log(this.name, "STARTING BINARY BA STAR STAGE 2");
 
         this.committeeVote(
@@ -294,11 +294,12 @@ module.exports = class StakeClient extends Client {
                 step,
                 0.685,
                 StakeBlockchain.CommitteeSize,
+                hblock,
                 3 + 2)
         }, 4);
     }
 
-    binaryBAStarCountStageTwo(round, step, T, tau, lambda) {
+    binaryBAStarCountStageTwo(round, step, T, tau, hblock, lambda) {
         let emptyHash = " THIS IS EMPTY HASH!!!!";
 
         let r = this.countVotes(
@@ -329,12 +330,12 @@ module.exports = class StakeClient extends Client {
         }
         step++;
         setTimeout(() =>
-            this.binaryBAStarStageThree(round, r, step),
+            this.binaryBAStarStageThree(round, r, hblock, step),
             0
         );
     }
 
-    binaryBAStarStageThree(round, r, step) {
+    binaryBAStarStageThree(round, r, hblock, step) {
         console.log(this.name, "STARTING BINARY BA STAR STAGE 3");
 
         this.committeeVote(
@@ -350,11 +351,12 @@ module.exports = class StakeClient extends Client {
                 step,
                 0.685,
                 StakeBlockchain.CommitteeSize,
+                hblock,
                 3 + 2)
         }, 4);
     }
 
-    binaryBAStarCountStageThree(round, step, T, tau, lambda) {
+    binaryBAStarCountStageThree(round, step, T, tau, hblock, lambda) {
         let emptyHash = " THIS IS EMPTY HASH!!!!";
 
         let r = this.countVotes(
