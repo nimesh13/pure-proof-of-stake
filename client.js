@@ -209,8 +209,7 @@ module.exports = class StakeClient extends Client {
     }
 
     // TODO: binary BA star algorithm to finish the consensus.
-    binaryBAStarStageOne(round, hblock) {
-        let step = 1;
+    binaryBAStarStageOne(round, hblock, step = 1) {
         let r = hblock;
         console.log(this.name, "STARTING BINARY BA STAR STAGE 1");
 
@@ -375,7 +374,7 @@ module.exports = class StakeClient extends Client {
         step++;
         if (step < 13) {
             setTimeout(() => {
-                this.binaryBAStarStageOne(round, hblock);
+                this.binaryBAStarStageOne(round, hblock, step);
             }, 0)
         } else {
             console.log(this.name, "HANG FOREVERR!!!!!!");
