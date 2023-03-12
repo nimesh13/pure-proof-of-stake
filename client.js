@@ -4,6 +4,7 @@ let { Client, utils } = require('spartan-gold');
 let StakeBlockchain = require('./blockchain');
 let { getHighestPriorityToken, verifySort, sign, verifySignature } = require('./utils');
 const BigInteger = require('jsbn').BigInteger;
+let crypto = require('crypto');
 
 const elliptic = require('elliptic');
 const EC = new elliptic.ec('secp256k1');
@@ -246,7 +247,7 @@ module.exports = class StakeClient extends Client {
 
         if (r == "TIMEOUT") {
             r = hblock;
-            console.log(this.name, "TIMED OUT!!");
+            console.log(this.name, "STAGE 1 TIMED OUT!!");
         } else if (r != emptyHash) {
             for (let s = step + 1; s <= step + 3; s++) {
                 this.committeeVote(
@@ -267,10 +268,138 @@ module.exports = class StakeClient extends Client {
                 this.hblockStar = r;
                 setTimeout(() => {
                     this.BAStar(round);
-                }, 4)
+                }, 4);
+                return;
             }
         }
         step++;
+        setTimeout(() =>
+            this.binaryBAStarStageTwo(round, r, step),
+            0
+        );
+    }
+
+    binaryBAStarStageTwo(round, r, step) {
+        console.log(this.name, "STARTING BINARY BA STAR STAGE 2");
+
+        this.committeeVote(
+            round,
+            step,
+            StakeBlockchain.CommitteeSize,
+            r,
+        );
+
+        setTimeout(() => {
+            this.binaryBAStarCountStageTwo(
+                round,
+                step,
+                0.685,
+                StakeBlockchain.CommitteeSize,
+                3 + 2)
+        }, 4);
+    }
+
+    binaryBAStarCountStageTwo(round, step, T, tau, lambda) {
+        let emptyHash = " THIS IS EMPTY HASH!!!!";
+
+        let r = this.countVotes(
+            round,
+            step,
+            T,
+            tau,
+            lambda,
+        );
+
+        if (r == "TIMEOUT") {
+            r = emptyHash;
+            console.log(this.name, "STAGE 2 TIMED OUT!!");
+        } else if (r != emptyHash) {
+            for (let s = step + 1; s <= step + 3; s++) {
+                this.committeeVote(
+                    round,
+                    s,
+                    tau,
+                    r
+                );
+                this.hblockStar = r;
+                setTimeout(() => {
+                    this.BAStar(round);
+                }, 4);
+                return;
+            }
+        }
+        step++;
+        setTimeout(() =>
+            this.binaryBAStarStageThree(round, r, step),
+            0
+        );
+    }
+
+    binaryBAStarStageThree(round, r, step) {
+        console.log(this.name, "STARTING BINARY BA STAR STAGE 3");
+
+        this.committeeVote(
+            round,
+            step,
+            StakeBlockchain.CommitteeSize,
+            r,
+        );
+
+        setTimeout(() => {
+            this.binaryBAStarCountStageThree(
+                round,
+                step,
+                0.685,
+                StakeBlockchain.CommitteeSize,
+                3 + 2)
+        }, 4);
+    }
+
+    binaryBAStarCountStageThree(round, step, T, tau, lambda) {
+        let emptyHash = " THIS IS EMPTY HASH!!!!";
+
+        let r = this.countVotes(
+            round,
+            step,
+            T,
+            tau,
+            lambda,
+        );
+
+        if (r == 'TIMEOUT') {
+            console.log(this.name, "STAGE 3 TIMED OUT!!");
+            if (this.commonCoin(round, steo, tau) == 0)
+                r = hblock;
+            else r = emptyHash;
+        }
+        step++;
+        if (step < 13) {
+            setTimeout(() => {
+                this.binaryBAStarStageOne(round, hblock);
+            }, 0)
+        } else {
+            console.log(this.name, "HANG FOREVERR!!!!!!");
+            return;
+        }
+    }
+
+    commonCoin(round, step, tau) {
+        let minHash = new BigInteger("2").pow(32 * 8);
+        if (this.incomingMsgs.has(round) && this.incomingMsgs.get(round).has(step)) {
+            const votes = this.incomingMsgs.get(round).get(step)[Symbol.iterator]();
+            while (true) {
+                let m = msgs.next().value;
+                if (m == undefined) break;
+                let [votes, value, sorthash] = this.processMsg(tau, m);
+                for (let j = 0; j < votes; j++) {
+                    let hash = crypto.createHash(HASH_ALG).update(sorthash + j).digest('hex');
+                    let h = new BigInteger(hash, 16);
+                    if (h < minHash)
+                        minHash = h;
+                }
+            }
+        }
+        return minHash % 2;
     }
 
     BAStar(round) {
