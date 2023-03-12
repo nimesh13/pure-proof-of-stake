@@ -23,9 +23,9 @@ let genesis = StakeBlockchain.makeGenesis({
     blockClass: StakeBlock,
     transactionClass: Transaction,
     clientBalanceMap: new Map([
-        [alice, 233],
-        [bob, 99],
-        [charlie, 67],
+        [alice, 15],
+        [bob, 10],
+        [charlie, 7],
     ]),
     seed: genesisSeed,
 });
@@ -52,4 +52,4 @@ setTimeout(() => {
     showBalances(alice);
 
     process.exit(0);
-}, 30000);
+}, 100000);
