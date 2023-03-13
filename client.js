@@ -389,7 +389,7 @@ module.exports = class StakeClient extends Client {
         if (this.incomingMsgs.has(round) && this.incomingMsgs.get(round).has(step)) {
             const votes = this.incomingMsgs.get(round).get(step)[Symbol.iterator]();
             while (true) {
-                let m = msgs.next().value;
+                let m = votes.next().value;
                 if (m == undefined) break;
                 let [votes, value, sorthash] = this.processMsg(tau, m);
                 for (let j = 0; j < votes; j++) {
