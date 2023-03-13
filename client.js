@@ -229,7 +229,7 @@ module.exports = class StakeClient extends Client {
                 3 + 2,
             );
         },
-            4);
+            4000);
     }
 
     binaryBAStarCountStageOne(round, step, T, tau, hblock, lambda) {
@@ -266,7 +266,7 @@ module.exports = class StakeClient extends Client {
                 this.hblockStar = r;
                 setTimeout(() => {
                     this.BAStar(round);
-                }, 4);
+                }, 4000);
                 return;
             }
         }
@@ -295,7 +295,7 @@ module.exports = class StakeClient extends Client {
                 StakeBlockchain.CommitteeSize,
                 hblock,
                 3 + 2)
-        }, 4);
+        }, 4000);
     }
 
     binaryBAStarCountStageTwo(round, step, T, tau, hblock, lambda) {
@@ -323,7 +323,7 @@ module.exports = class StakeClient extends Client {
                 this.hblockStar = r;
                 setTimeout(() => {
                     this.BAStar(round);
-                }, 4);
+                }, 4000);
                 return;
             }
         }
@@ -352,7 +352,7 @@ module.exports = class StakeClient extends Client {
                 StakeBlockchain.CommitteeSize,
                 hblock,
                 3 + 2)
-        }, 4);
+        }, 4000);
     }
 
     binaryBAStarCountStageThree(round, step, T, tau, hblock, lambda) {
@@ -376,7 +376,7 @@ module.exports = class StakeClient extends Client {
         if (step < 13) {
             setTimeout(() => {
                 this.binaryBAStarStageOne(round, hblock, step);
-            }, 4)
+            }, 4000)
         } else {
             console.log(this.name, "HANG FOREVERR!!!!!!");
             return;
