@@ -1,13 +1,10 @@
 "use strict"
 
 const { Evaluate, ProofHoHash } = require('@idena/vrf-js');
+let { utils } = require('spartan-gold');
 const BigInteger = require('jsbn').BigInteger;
-let crypto = require('crypto');
 const elliptic = require('elliptic');
 const EC = new elliptic.ec('secp256k1');
-
-// CRYPTO settings
-const HASH_ALG = 'sha256';
 
 exports.getHighestPriorityToken = function HighestPriorityToken(
     privateKey,
@@ -64,7 +61,7 @@ function sortition(hash, tau, W, w) {
 
     let maxPriorityToken = new BigInteger("-1", 16);
     for (let i = 0; i <= j; i++) {
-        let tokenHash = crypto.createHash(HASH_ALG).update(hash + i).digest('hex');
+        let tokenHash = utils.hash(hash + i);
         let tokenNumber = new BigInteger(tokenHash, 16);
         if (tokenNumber > maxPriorityToken)
             maxPriorityToken = tokenNumber;
