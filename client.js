@@ -4,7 +4,6 @@ let { Client, utils } = require('spartan-gold');
 let StakeBlockchain = require('./blockchain');
 let { getHighestPriorityToken, verifySort, sign, verifySignature } = require('./utils');
 const BigInteger = require('jsbn').BigInteger;
-let crypto = require('crypto');
 
 const elliptic = require('elliptic');
 const EC = new elliptic.ec('secp256k1');
@@ -211,7 +210,7 @@ module.exports = class StakeClient extends Client {
     // TODO: binary BA star algorithm to finish the consensus.
     binaryBAStarStageOne(round, hblock, step = 1) {
         let r = hblock;
-        console.log(this.name, "STARTING BINARY BA STAR STAGE 1");
+        console.log(this.name, "STARTING BINARY BA STAR STAGE", step);
 
         this.committeeVote(
             round,
@@ -246,7 +245,7 @@ module.exports = class StakeClient extends Client {
 
         if (r == "TIMEOUT") {
             r = hblock;
-            console.log(this.name, "STAGE 1 TIMED OUT!!");
+            console.log(this.name, "TIMED OUT STAGE:", step);
         } else if (r != emptyHash) {
             for (let s = step + 1; s <= step + 3; s++) {
                 this.committeeVote(
@@ -279,7 +278,7 @@ module.exports = class StakeClient extends Client {
     }
 
     binaryBAStarStageTwo(round, r, hblock, step) {
-        console.log(this.name, "STARTING BINARY BA STAR STAGE 2");
+        console.log(this.name, "STARTING BINARY BA STAR STAGE", step);
 
         this.committeeVote(
             round,
@@ -312,7 +311,7 @@ module.exports = class StakeClient extends Client {
 
         if (r == "TIMEOUT") {
             r = emptyHash;
-            console.log(this.name, "STAGE 2 TIMED OUT!!");
+            console.log(this.name, "TIMED OUT STAGE:", step);
         } else if (r != emptyHash) {
             for (let s = step + 1; s <= step + 3; s++) {
                 this.committeeVote(
@@ -336,7 +335,7 @@ module.exports = class StakeClient extends Client {
     }
 
     binaryBAStarStageThree(round, r, hblock, step) {
-        console.log(this.name, "STARTING BINARY BA STAR STAGE 3");
+        console.log(this.name, "STARTING BINARY BA STAR STAGE", step);
 
         this.committeeVote(
             round,
@@ -368,7 +367,7 @@ module.exports = class StakeClient extends Client {
         );
 
         if (r == 'TIMEOUT') {
-            console.log(this.name, "STAGE 3 TIMED OUT!!");
+            console.log(this.name, "TIMED OUT STAGE:", step);
             if (this.commonCoin(round, step, tau) == 0)
                 r = hblock;
             else r = emptyHash;
@@ -377,7 +376,7 @@ module.exports = class StakeClient extends Client {
         if (step < 13) {
             setTimeout(() => {
                 this.binaryBAStarStageOne(round, hblock, step);
-            }, 0)
+            }, 4)
         } else {
             console.log(this.name, "HANG FOREVERR!!!!!!");
             return;
@@ -387,13 +386,13 @@ module.exports = class StakeClient extends Client {
     commonCoin(round, step, tau) {
         let minHash = new BigInteger("2").pow(32 * 8);
         if (this.incomingMsgs.has(round) && this.incomingMsgs.get(round).has(step)) {
-            const votes = this.incomingMsgs.get(round).get(step)[Symbol.iterator]();
+            const msgs = this.incomingMsgs.get(round).get(step)[Symbol.iterator]();
             while (true) {
-                let m = votes.next().value;
+                let m = msgs.next().value;
                 if (m == undefined) break;
                 let [votes, value, sorthash] = this.processMsg(tau, m);
                 for (let j = 0; j < votes; j++) {
-                    let hash = crypto.createHash(HASH_ALG).update(sorthash + j).digest('hex');
+                    let hash = utils.hash(sorthash + j);
                     let h = new BigInteger(hash, 16);
                     if (h < minHash)
                         minHash = h;
@@ -500,6 +499,8 @@ module.exports = class StakeClient extends Client {
     countVotes(round, step, T, tau, lambda) {
         let counts = {};
         let voters = new Set();
+
+        // return "TIMEOUT";
 
         if (!this.incomingMsgs.has(round) || !this.incomingMsgs.get(round).has(step)) {
             return "TIMEOUT";
