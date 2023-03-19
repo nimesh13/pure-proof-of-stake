@@ -17,6 +17,10 @@ module.exports = class StakeBlock extends Block {
         this.genesisBlockHash = prevBlock ? prevBlock.genesisBlockHash : this.hashVal();
         this.winner = '';
         this.seed = seed;
+        this.blockhash = null;
+        this.blockMaxToken = null;
+        this.blockWinners = 0;
+        this.blockProof = null;
     }
 
     toJSON() {
