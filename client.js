@@ -23,7 +23,7 @@ module.exports = class StakeClient extends Client {
 
         this.on(StakeBlockchain.PROPOSE_BLOCK, this.proposeBlock);
         this.on(StakeBlockchain.ANNOUNCE_PROOF, this.receiveProof);
-        this.on(StakeBlockchain.ANNOUNCE_BLOCK, this.receiveBlock1);
+        this.on(StakeBlockchain.ANNOUNCE_BLOCK, this.receiveBlock);
         this.on(StakeBlockchain.COMMITTEE_VOTE, this.committeeVote);
         this.on(StakeBlockchain.GOSSIP_VOTE, this.receiveVote);
 
@@ -38,7 +38,11 @@ module.exports = class StakeClient extends Client {
     initialize() {
         this.proposals = {};
         this.currentBlock = StakeBlockchain.makeBlock(this.address, this.lastBlock);
+
+        // calculate this seed from last Block.
         let seed = "seed";
+        this.currentBlock.seed = seed;
+
         this.ctx = this.currentBlock.getContext(seed);
         this.hblockStar = null;
 
@@ -63,6 +67,12 @@ module.exports = class StakeClient extends Client {
         );
 
         if (maxPriorityToken !== null) {
+            this.currentBlock.winner = this.address;
+            this.currentBlock.blockhash = hash;
+            this.currentBlock.blockMaxToken = maxPriorityToken;
+            this.currentBlock.blockWinners = j;
+            this.currentBlock.blockProof = proof;
+
             let obj = {
                 data,
                 hash,
@@ -95,7 +105,6 @@ module.exports = class StakeClient extends Client {
     }
 
     findWinningProposal() {
-        console.log(this.name, "Reached here after timeout!");
         let winningToken = new BigInteger("-1");
         let winningProp = {};
         let winningBlockhash = "&&&&&";
@@ -112,7 +121,7 @@ module.exports = class StakeClient extends Client {
             this.currentBlock.chainLength,
             winningBlockhash
         ),
-            0
+            3000
         );
     }
 
@@ -133,7 +142,7 @@ module.exports = class StakeClient extends Client {
                 StakeBlockchain.CommitteeSize,
                 3 + 2,
             );
-        }, 4000);
+        }, 6000);
     }
 
     countReduceOne(round, step, T, tau, lambda) {
@@ -154,7 +163,7 @@ module.exports = class StakeClient extends Client {
                 StakeBlockchain.CommitteeSize,
                 hblock1,
             );
-        }, 4000);
+        }, 6000);
 
     }
 
@@ -184,7 +193,7 @@ module.exports = class StakeClient extends Client {
                 StakeBlockchain.CommitteeSize,
                 3 + 2,
             );
-        }, 4000);
+        }, 6000);
     }
 
     countReduceTwo(round, step, T, tau, lambda) {
@@ -229,7 +238,7 @@ module.exports = class StakeClient extends Client {
                 3 + 2,
             );
         },
-            4000);
+            6000);
     }
 
     binaryBAStarCountStageOne(round, step, T, tau, hblock, lambda) {
@@ -242,6 +251,8 @@ module.exports = class StakeClient extends Client {
             tau,
             lambda,
         );
+
+        console.log(this.name, "[1] Votes:", r);
 
         if (r == "TIMEOUT") {
             r = hblock;
@@ -264,16 +275,17 @@ module.exports = class StakeClient extends Client {
                     r
                 );
                 this.hblockStar = r;
+                console.log(this.name, "[1] Quorum reached. Returning with hash: ", this.hblockStar);
                 setTimeout(() => {
                     this.BAStar(round);
-                }, 4000);
+                }, 6000);
                 return;
             }
         }
         step++;
         setTimeout(() =>
             this.binaryBAStarStageTwo(round, r, hblock, step),
-            0
+            3000
         );
     }
 
@@ -295,7 +307,7 @@ module.exports = class StakeClient extends Client {
                 StakeBlockchain.CommitteeSize,
                 hblock,
                 3 + 2)
-        }, 4000);
+        }, 6000);
     }
 
     binaryBAStarCountStageTwo(round, step, T, tau, hblock, lambda) {
@@ -309,10 +321,12 @@ module.exports = class StakeClient extends Client {
             lambda,
         );
 
+        console.log(this.name, "[2] Votes:", r);
+
         if (r == "TIMEOUT") {
             r = emptyHash;
             console.log(this.name, "TIMED OUT STAGE:", step);
-        } else if (r != emptyHash) {
+        } else if (r == emptyHash) {
             for (let s = step + 1; s <= step + 3; s++) {
                 this.committeeVote(
                     round,
@@ -321,16 +335,17 @@ module.exports = class StakeClient extends Client {
                     r
                 );
                 this.hblockStar = r;
+                console.log(this.name, "[2] Quorum reached. Returning with hash: ", this.hblockStar);
                 setTimeout(() => {
                     this.BAStar(round);
-                }, 4000);
+                }, 6000);
                 return;
             }
         }
         step++;
         setTimeout(() =>
             this.binaryBAStarStageThree(round, r, hblock, step),
-            0
+            3000
         );
     }
 
@@ -352,7 +367,7 @@ module.exports = class StakeClient extends Client {
                 StakeBlockchain.CommitteeSize,
                 hblock,
                 3 + 2)
-        }, 4000);
+        }, 6000);
     }
 
     binaryBAStarCountStageThree(round, step, T, tau, hblock, lambda) {
@@ -366,6 +381,8 @@ module.exports = class StakeClient extends Client {
             lambda,
         );
 
+        console.log(this.name, "[3] Votes:", r);
+
         if (r == 'TIMEOUT') {
             console.log(this.name, "TIMED OUT STAGE:", step);
             if (this.commonCoin(round, step, tau) == 0)
@@ -376,7 +393,7 @@ module.exports = class StakeClient extends Client {
         if (step < 13) {
             setTimeout(() => {
                 this.binaryBAStarStageOne(round, hblock, step);
-            }, 4000)
+            }, 3000)
         } else {
             console.log(this.name, "HANG FOREVERR!!!!!!");
             return;
@@ -411,9 +428,14 @@ module.exports = class StakeClient extends Client {
             3 + 2,
         );
 
-        if (this.hblockStar == r)
+        if (this.hblockStar == r) {
             console.log(this.name, "FINAL CONSENSUS REACHED!!!");
-        else console.log(this.name, "TENTATIVE CONSENSUS REACHED!!!");
+            this.announceBlock();
+        } else {
+            console.log(this.name, "TENTATIVE CONSENSUS REACHED!!!");
+            console.log(this.name, "FINAL votes: ", this.hblockStar);
+            console.log(this.name, "R: ", r);
+        }
         return;
     }
 
@@ -433,7 +455,7 @@ module.exports = class StakeClient extends Client {
         );
 
         if (j > 0) {
-            console.log(this.name, "I am a committee member!!");
+            // console.log(this.name, "I am a committee member!!");
             let msg = {
                 round,
                 step,
@@ -467,7 +489,7 @@ module.exports = class StakeClient extends Client {
             console.log(this.name, "Invalid signature!");
             return [0, null, null];
         }
-        console.log(this.name, "Vote is valid!!");
+        // console.log(this.name, "Vote is valid!!");
 
         let { round, step, sorthash, proof, lastBlock, value, addr } = msg;
 
@@ -529,7 +551,7 @@ module.exports = class StakeClient extends Client {
 
     receiveVote(vote) {
         let { voter, round, step } = vote;
-        console.log(this.name, "Received vote from: ", voter);
+        // console.log(this.name, "Received vote from: ", voter);
 
         if (!this.incomingMsgs.has(round)) {
             this.incomingMsgs.set(round, new Map());
@@ -541,63 +563,49 @@ module.exports = class StakeClient extends Client {
         this.incomingMsgs.get(round).get(step).push(vote);
     }
 
-    receiveBlock1(block) {
+    announceBlock() {
+        this.net.broadcast(StakeBlockchain.ANNOUNCE_BLOCK, this.currentBlock);
+    }
+
+    receiveBlock(block) {
 
         block = StakeBlockchain.deserializeBlock(block);
-        let currentBlock = this.currentBlock;
 
-        if (currentBlock.winner === block.winner) {
+        // Ignore the block if it has been received previously.
+        if (this.blocks.has(block.id)) return null;
 
-            // Storing the block.
+        // if (!block.isGenesisBlock()) {
+        //     // Verify the block, and store it if everything looks good.
+        //     // This code will trigger an exception if there are any invalid transactions.
+        //     let success = block.rerun(prevBlock);
+        //     if (!success) return null;
+        // }
 
-            // Make sure that we have the previous blocks, unless it is the genesis block.
-            // If we don't have the previous blocks, request the missing blocks and exit.
-            let prevBlock = this.blocks.get(block.prevBlockHash);
-            if (!prevBlock && !block.isGenesisBlock()) {
-                let stuckBlocks = this.pendingBlocks.get(block.prevBlockHash);
+        this.blocks.set(block.id, block);
 
-                // If this is the first time that we have identified this block as missing,
-                // send out a request for the block.
-                if (stuckBlocks === undefined) {
-                    this.requestMissingBlock(block);
-                    stuckBlocks = new Set();
-                }
-                stuckBlocks.add(block);
-
-                this.pendingBlocks.set(block.prevBlockHash, stuckBlocks);
-                return null;
-            }
-
-            if (!block.isGenesisBlock()) {
-                // Verify the block, and store it if everything looks good.
-                // This code will trigger an exception if there are any invalid transactions.
-                let success = block.rerun(prevBlock);
-                if (!success) return null;
-            }
-
-            this.blocks.set(block.id, block);
-
-            // If it is a better block than the client currently has, set that
-            // as the new currentBlock, and update the lastConfirmedBlock.
-            if (this.lastBlock.chainLength < block.chainLength) {
-                this.lastBlock = block;
-                this.setLastConfirmed();
-            }
-
-            this.initialize();
+        // If it is a better block than the client currently has, set that
+        // as the new currentBlock, and update the lastConfirmedBlock.
+        if (this.lastBlock.chainLength < block.chainLength) {
+            this.lastBlock = block;
+            this.setLastConfirmed();
         }
+
+        setTimeout(() => {
+            this.initialize();
+        }, 0);
+
     }
 
     setLastConfirmed() {
-        let block = this.lastBlock;
+        // let block = this.lastBlock;
 
-        let confirmedBlockHeight = block.chainLength - StakeBlockchain.CONFIRMED_DEPTH;
-        if (confirmedBlockHeight < 0) {
-            confirmedBlockHeight = 0;
-        }
-        while (block.chainLength > confirmedBlockHeight) {
-            block = this.blocks.get(block.prevBlockHash);
-        }
-        this.lastConfirmedBlock = block;
+        // let confirmedBlockHeight = block.chainLength - StakeBlockchain.CONFIRMED_DEPTH;
+        // if (confirmedBlockHeight < 0) {
+        //     confirmedBlockHeight = 0;
+        // }
+        // while (block.chainLength > confirmedBlockHeight) {
+        //     block = this.blocks.get(block.prevBlockHash);
+        // }
+        this.lastConfirmedBlock = this.lastBlock;
     }
 }
