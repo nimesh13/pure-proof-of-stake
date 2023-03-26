@@ -216,7 +216,6 @@ module.exports = class StakeClient extends Client {
         }, 0)
     }
 
-    // TODO: binary BA star algorithm to finish the consensus.
     binaryBAStarStageOne(round, hblock, step = 1) {
         let r = hblock;
         console.log(this.name, "STARTING BINARY BA STAR STAGE", step);
@@ -439,7 +438,6 @@ module.exports = class StakeClient extends Client {
         return;
     }
 
-    // TODO: the committee vote
     committeeVote(round, step, tau, value) {
 
         // check if user is in committee using Sortition
@@ -480,7 +478,6 @@ module.exports = class StakeClient extends Client {
         }
     }
 
-    // TODO: process the msgs or votes received
     processMsg(tau, m) {
         let { pk, msg, sig } = m;
 
@@ -517,7 +514,6 @@ module.exports = class StakeClient extends Client {
         return [j, value, sorthash];
     }
 
-    // TODO: count votes received for every block
     countVotes(round, step, T, tau, lambda) {
         let counts = {};
         let voters = new Set();
