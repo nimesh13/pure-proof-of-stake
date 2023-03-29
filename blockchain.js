@@ -48,7 +48,7 @@ module.exports = class StakeBlockchain extends Blockchain {
             b.prevBlockHash = o.prevBlockHash;
             b.proof = o.proof;
             b.rewardAddr = o.rewardAddr;
-            b.winner = o.winner;
+            // b.winner = o.winner;
             b.genesisBlockHash = o.genesisBlockHash;
             b.winner = o.winner;
             b.seed = o.seed;
@@ -56,6 +56,7 @@ module.exports = class StakeBlockchain extends Blockchain {
             b.blockMaxToken = o.blockMaxToken;
             b.blockWinners = o.blockWinners;
             b.blockProof = o.blockProof;
+            b.blockStatus = o.blockStatus;
         }
 
         return b;
