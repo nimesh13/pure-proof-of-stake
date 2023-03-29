@@ -8,19 +8,20 @@ module.exports = class StakeBlock extends Block {
 
         super(rewardAddr, prevBlock);
 
-        if (prevBlock && prevBlock.winner) {
-            // Add the previous block's rewards to the miner who published the block.
-            let winnerBalance = this.balanceOf(prevBlock.winner) || 0;
-            this.balances.set(prevBlock.winner, winnerBalance + prevBlock.totalRewards());
-        }
+        // if (prevBlock && prevBlock.winner) {
+        //     // Add the previous block's rewards to the miner who published the block.
+        //     let winnerBalance = this.balanceOf(prevBlock.winner) || 0;
+        //     this.balances.set(prevBlock.winner, winnerBalance + prevBlock.totalRewards());
+        // }
 
         this.genesisBlockHash = prevBlock ? prevBlock.genesisBlockHash : this.hashVal();
-        this.winner = '';
+        // this.winner = '';
         this.seed = seed;
         this.blockhash = null;
         this.blockMaxToken = null;
         this.blockWinners = 0;
         this.blockProof = null;
+        this.blockStatus = null;
     }
 
     toJSON() {
