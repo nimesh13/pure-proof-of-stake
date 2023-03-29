@@ -587,6 +587,16 @@ module.exports = class StakeClient extends Client {
         //     if (!success) return null;
         // }
 
+        if (block.blockStatus === 'FINAL') {
+            console.log(this.name, 'Recevied a FINAL block. Finalizing all TENTATIVE blocks!');
+            for (let [id, block] of this.blocks.entries()) {
+                if (block.blockStatus === 'TENTATIVE') {
+                    block.blockStatus = ' FINAL';
+                    this.blocks.set(id, block);
+                }
+            }
+        }
+
         this.blocks.set(block.id, block);
 
         // If it is a better block than the client currently has, set that
