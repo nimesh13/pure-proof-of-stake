@@ -2,7 +2,7 @@
 
 let { Client, utils } = require('spartan-gold');
 let StakeBlockchain = require('./blockchain');
-let { getHighestPriorityToken, verifySort, sign, verifySignature } = require('./utils');
+let { getHighestPriorityToken, verifySort, sign, verifySignature, getRandomInt } = require('./utils');
 const BigInteger = require('jsbn').BigInteger;
 
 const elliptic = require('elliptic');
@@ -67,7 +67,6 @@ module.exports = class StakeClient extends Client {
         );
 
         if (maxPriorityToken !== null) {
-            this.currentBlock.winner = this.address;
             this.currentBlock.blockhash = hash;
             this.currentBlock.blockMaxToken = maxPriorityToken;
             this.currentBlock.blockWinners = j;
@@ -419,6 +418,8 @@ module.exports = class StakeClient extends Client {
     }
 
     BAStar(round) {
+        let emptyHash = " THIS IS EMPTY HASH!!!!";
+
         let r = this.countVotes(
             round,
             'FINAL',
@@ -429,11 +430,19 @@ module.exports = class StakeClient extends Client {
 
         if (this.hblockStar == r) {
             console.log(this.name, "FINAL CONSENSUS REACHED!!!");
-            this.announceBlock();
+            if (this.hblockStar === this.currentBlock.hashVal())
+                this.announceBlock('FINAL');
         } else {
             console.log(this.name, "TENTATIVE CONSENSUS REACHED!!!");
             console.log(this.name, "FINAL votes: ", this.hblockStar);
             console.log(this.name, "R: ", r);
+            console.log(this.name, this.identity);
+            if (this.hblockStar === emptyHash && getRandomInt(3) == this.identity) {
+                this.currentBlock.rewardAddr = null;
+                this.announceBlock('TENATIVE');
+            }
+            else if (this.hblockStar === this.currentBlock.hashVal())
+                this.announceBlock('TENATIVE');
         }
         return;
     }
@@ -481,7 +490,6 @@ module.exports = class StakeClient extends Client {
     processMsg(tau, m) {
         let { pk, msg, sig } = m;
 
-        // console.log("Message: ", msg)
         if (!verifySignature(pk, msg, sig)) {
             console.log(this.name, "Invalid signature!");
             return [0, null, null];
@@ -517,8 +525,6 @@ module.exports = class StakeClient extends Client {
     countVotes(round, step, T, tau, lambda) {
         let counts = {};
         let voters = new Set();
-
-        // return "TIMEOUT";
 
         if (!this.incomingMsgs.has(round) || !this.incomingMsgs.get(round).has(step)) {
             return "TIMEOUT";
@@ -559,8 +565,12 @@ module.exports = class StakeClient extends Client {
         this.incomingMsgs.get(round).get(step).push(vote);
     }
 
-    announceBlock() {
-        this.net.broadcast(StakeBlockchain.ANNOUNCE_BLOCK, this.currentBlock);
+    announceBlock(status) {
+        console.log(this.name, "ANNOUNCING BLOCK!!");
+        this.currentBlock.blockStatus = status;
+        setTimeout(() => {
+            this.net.broadcast(StakeBlockchain.ANNOUNCE_BLOCK, this.currentBlock);
+        }, 3000);
     }
 
     receiveBlock(block) {
