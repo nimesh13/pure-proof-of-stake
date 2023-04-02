@@ -496,8 +496,12 @@ module.exports = class StakeClient extends Client {
 
         // discard messages that do not extend this chain
         if (lastBlock != this.ctx.lastBlock) {
-            console.log(this.name, "Message doesn't extend this chain!");
-            return [0, null, null];
+
+            throw new Error(`
+                Possible fork detected.
+                Received block that doesn't extend the chain:
+                received -> ${JSON.stringify(lastBlock)}
+                actual -> ${JSON.stringify(this.ctx.lastBlock)}`);
         }
 
         // check if user is in committee using Sortition
