@@ -14,8 +14,6 @@ let alice = new StakeClient({ name: "Alice", net: fakeNet, identity: 1 });
 let bob = new StakeClient({ name: "Bob", net: fakeNet, identity: 2 });
 let charlie = new StakeClient({ name: "Charlie", net: fakeNet, identity: 3 });
 
-let clientArray = [alice, bob, charlie];
-
 let genesisSeed = "########## THIS IS GENESIS BLOCK SEED FOR CS298 ##########";
 
 // Creating genesis block
@@ -42,6 +40,7 @@ showBalances(alice);
 
 fakeNet.register(alice, bob, charlie);
 
+let clientArray = [alice, bob, charlie];
 clientArray.forEach(client => {
     client.initialize();
 });
