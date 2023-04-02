@@ -7,19 +7,15 @@ const BigInteger = require('jsbn').BigInteger;
 
 const elliptic = require('elliptic');
 const EC = new elliptic.ec('secp256k1');
-let identityCount = 0;
 
 module.exports = class StakeClient extends Client {
 
     constructor(...args) {
         super(...args);
 
+        this.identity = args[0]["identity"];
         this.keyPair = EC.genKeyPair();
-
         this.address = utils.calcAddress(this.keyPair.getPublic().encode().toString());
-
-        this.identity = identityCount;
-        identityCount += 1;
 
         this.on(StakeBlockchain.PROPOSE_BLOCK, this.proposeBlock);
         this.on(StakeBlockchain.ANNOUNCE_PROOF, this.receiveProof);

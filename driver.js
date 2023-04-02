@@ -10,9 +10,9 @@ console.log("Starting simulation.  This may take a moment...");
 let fakeNet = new FakeNet();
 
 // Clients
-let alice = new StakeClient({ name: "Alice", net: fakeNet });
-let bob = new StakeClient({ name: "Bob", net: fakeNet });
-let charlie = new StakeClient({ name: "Charlie", net: fakeNet });
+let alice = new StakeClient({ name: "Alice", net: fakeNet, identity: 1 });
+let bob = new StakeClient({ name: "Bob", net: fakeNet, identity: 2 });
+let charlie = new StakeClient({ name: "Charlie", net: fakeNet, identity: 3 });
 
 let clientArray = [alice, bob, charlie];
 
