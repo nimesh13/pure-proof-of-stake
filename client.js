@@ -490,13 +490,14 @@ module.exports = class StakeClient extends Client {
             console.log(this.name, "Invalid signature!");
             return [0, null, null];
         }
+
+        // The recevied Vote is valid.
         // console.log(this.name, "Vote is valid!!");
 
         let { round, step, sorthash, proof, lastBlock, value, addr } = msg;
 
         // discard messages that do not extend this chain
         if (lastBlock != this.ctx.lastBlock) {
-
             throw new Error(`
                 Possible fork detected.
                 Received block that doesn't extend the chain:
