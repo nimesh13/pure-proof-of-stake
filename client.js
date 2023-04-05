@@ -112,12 +112,18 @@ module.exports = class StakeClient extends Client {
             }
         }
 
-        setTimeout(() => this.reductionOne(
-            this.currentBlock.chainLength,
-            winningBlockhash
-        ),
-            3000
-        );
+        if (winningBlockhash === "&&&&&") {
+            this.timeouts.push(setTimeout(() => {
+                this.initialize();
+            }, 0));
+        } else {
+            this.timeouts.push(setTimeout(() => this.reductionOne(
+                this.currentBlock.chainLength,
+                winningBlockhash
+            ),
+                3000
+            ));
+        }
     }
 
     reductionOne(round, hblock) {
