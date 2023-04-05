@@ -22,16 +22,20 @@ module.exports = class StakeClient extends Client {
         this.on(StakeBlockchain.ANNOUNCE_BLOCK, this.receiveBlock);
         this.on(StakeBlockchain.COMMITTEE_VOTE, this.committeeVote);
         this.on(StakeBlockchain.GOSSIP_VOTE, this.receiveVote);
+        this.on(StakeBlockchain.TERMINATE_PROPOSAL, this.terminateProposal);
 
         this.proposals = {};
         this.ctx = null;
         this.incomingMsgs = new Map();
+        this.timeouts = [];
     }
 
     /**
     * Starts listeners and begins mining.
     */
     initialize() {
+        this.timeouts.shift();
+
         this.proposals = {};
         this.currentBlock = StakeBlockchain.makeBlock(this.address, this.lastBlock);
 
@@ -42,11 +46,12 @@ module.exports = class StakeClient extends Client {
         this.ctx = this.currentBlock.getContext(seed);
         this.hblockStar = null;
 
-        setTimeout(() => this.emit(StakeBlockchain.PROPOSE_BLOCK), 1000);
+        this.timeouts.push(setTimeout(() => this.emit(StakeBlockchain.PROPOSE_BLOCK), 1000));
     }
 
     proposeBlock() {
 
+        this.timeouts.shift();
         let role = "proposer";
         let data = this.ctx.seed + role;
         let w = this.currentBlock.balanceOf(this.address);
@@ -88,7 +93,7 @@ module.exports = class StakeClient extends Client {
             console.log(this.name, "I cannot propose blocks. Listening for other proposals!");
         }
 
-        setTimeout(() => this.findWinningProposal(), 2000);
+        this.timeouts.push(setTimeout(() => this.findWinningProposal(), 2000));
     }
 
     receiveProof(o) {
@@ -100,6 +105,8 @@ module.exports = class StakeClient extends Client {
     }
 
     findWinningProposal() {
+        this.timeouts.shift();
+
         let winningToken = new BigInteger("-1");
         let winningProp = {};
         let winningBlockhash = "&&&&&";
@@ -127,6 +134,7 @@ module.exports = class StakeClient extends Client {
     }
 
     reductionOne(round, hblock) {
+        this.timeouts.shift();
         console.log(this.name, "Reduction step!!!!");
         this.committeeVote(
             round,
@@ -135,7 +143,7 @@ module.exports = class StakeClient extends Client {
             hblock
         );
 
-        setTimeout(() => {
+        this.timeouts.push(setTimeout(() => {
             this.countReduceOne(
                 round,
                 "REDUCTION_ONE",
@@ -143,10 +151,11 @@ module.exports = class StakeClient extends Client {
                 StakeBlockchain.CommitteeSize,
                 3 + 2,
             );
-        }, 6000);
+        }, 6000));
     }
 
     countReduceOne(round, step, T, tau, lambda) {
+        this.timeouts.shift();
         let hblock1 = this.countVotes(
             round,
             step,
@@ -157,18 +166,19 @@ module.exports = class StakeClient extends Client {
 
         console.log(this.name, "REDUCTION ONE:", hblock1);
 
-        setTimeout(() => {
+        this.timeouts.push(setTimeout(() => {
             this.reductionTwo(
                 round,
                 "REDUCTION_TWO",
                 StakeBlockchain.CommitteeSize,
                 hblock1,
             );
-        }, 6000);
+        }, 6000));
 
     }
 
     reductionTwo(round, step, tau, hblock1) {
+        this.timeouts.shift();
         let emptyHash = " THIS IS EMPTY HASH!!!!";
         if (hblock1 == StakeBlockchain.TIMEOUT) {
             this.committeeVote(
@@ -186,7 +196,7 @@ module.exports = class StakeClient extends Client {
             );
         }
 
-        setTimeout(() => {
+        this.timeouts.push(setTimeout(() => {
             this.countReduceTwo(
                 round,
                 "REDUCTION_TWO",
@@ -194,10 +204,11 @@ module.exports = class StakeClient extends Client {
                 StakeBlockchain.CommitteeSize,
                 3 + 2,
             );
-        }, 6000);
+        }, 6000));
     }
 
     countReduceTwo(round, step, T, tau, lambda) {
+        this.timeouts.shift();
         let hblock2 = this.countVotes(
             round,
             step,
@@ -212,12 +223,13 @@ module.exports = class StakeClient extends Client {
 
         console.log(this.name, "REDUCTION TWO:", hblock2);
 
-        setTimeout(() => {
+        this.timeouts.push(setTimeout(() => {
             this.binaryBAStarStageOne(round, hblock2);
-        }, 0)
+        }, 0));
     }
 
     binaryBAStarStageOne(round, hblock, step = 1) {
+        this.timeouts.shift();
         let r = hblock;
         console.log(this.name, "STARTING BINARY BA STAR STAGE", step);
 
@@ -228,7 +240,7 @@ module.exports = class StakeClient extends Client {
             r
         );
 
-        setTimeout(() => {
+        this.timeouts.push(setTimeout(() => {
             this.binaryBAStarCountStageOne(
                 round,
                 step,
@@ -238,10 +250,11 @@ module.exports = class StakeClient extends Client {
                 3 + 2,
             );
         },
-            6000);
+            6000));
     }
 
     binaryBAStarCountStageOne(round, step, T, tau, hblock, lambda) {
+        this.timeouts.shift();
         let emptyHash = " THIS IS EMPTY HASH!!!!";
 
         let r = this.countVotes(
@@ -276,20 +289,21 @@ module.exports = class StakeClient extends Client {
                 );
                 this.hblockStar = r;
                 console.log(this.name, "[1] Quorum reached. Returning with hash: ", this.hblockStar);
-                setTimeout(() => {
+                this.timeouts.push(setTimeout(() => {
                     this.BAStar(round);
-                }, 6000);
+                }, 6000));
                 return;
             }
         }
         step++;
-        setTimeout(() =>
+        this.timeouts.push(setTimeout(() =>
             this.binaryBAStarStageTwo(round, r, hblock, step),
             3000
-        );
+        ));
     }
 
     binaryBAStarStageTwo(round, r, hblock, step) {
+        this.timeouts.shift();
         console.log(this.name, "STARTING BINARY BA STAR STAGE", step);
 
         this.committeeVote(
@@ -299,7 +313,7 @@ module.exports = class StakeClient extends Client {
             r,
         );
 
-        setTimeout(() => {
+        this.timeouts.push(setTimeout(() => {
             this.binaryBAStarCountStageTwo(
                 round,
                 step,
@@ -307,10 +321,11 @@ module.exports = class StakeClient extends Client {
                 StakeBlockchain.CommitteeSize,
                 hblock,
                 3 + 2)
-        }, 6000);
+        }, 6000));
     }
 
     binaryBAStarCountStageTwo(round, step, T, tau, hblock, lambda) {
+        this.timeouts.shift();
         let emptyHash = " THIS IS EMPTY HASH!!!!";
 
         let r = this.countVotes(
@@ -336,20 +351,21 @@ module.exports = class StakeClient extends Client {
                 );
                 this.hblockStar = r;
                 console.log(this.name, "[2] Quorum reached. Returning with hash: ", this.hblockStar);
-                setTimeout(() => {
+                this.timeouts.push(setTimeout(() => {
                     this.BAStar(round);
-                }, 6000);
+                }, 6000));
                 return;
             }
         }
         step++;
-        setTimeout(() =>
+        this.timeouts.push(setTimeout(() =>
             this.binaryBAStarStageThree(round, r, hblock, step),
             3000
-        );
+        ));
     }
 
     binaryBAStarStageThree(round, r, hblock, step) {
+        this.timeouts.shift();
         console.log(this.name, "STARTING BINARY BA STAR STAGE", step);
 
         this.committeeVote(
@@ -359,7 +375,7 @@ module.exports = class StakeClient extends Client {
             r,
         );
 
-        setTimeout(() => {
+        this.timeouts.push(setTimeout(() => {
             this.binaryBAStarCountStageThree(
                 round,
                 step,
@@ -367,10 +383,11 @@ module.exports = class StakeClient extends Client {
                 StakeBlockchain.CommitteeSize,
                 hblock,
                 3 + 2)
-        }, 6000);
+        }, 6000));
     }
 
     binaryBAStarCountStageThree(round, step, T, tau, hblock, lambda) {
+        this.timeouts.shift();
         let emptyHash = " THIS IS EMPTY HASH!!!!";
 
         let r = this.countVotes(
@@ -391,9 +408,9 @@ module.exports = class StakeClient extends Client {
         }
         step++;
         if (step < 13) {
-            setTimeout(() => {
+            this.timeouts.push(setTimeout(() => {
                 this.binaryBAStarStageOne(round, hblock, step);
-            }, 3000)
+            }, 3000));
         } else {
             console.log(this.name, "HANG FOREVERR!!!!!!");
             return;
@@ -420,6 +437,7 @@ module.exports = class StakeClient extends Client {
     }
 
     BAStar(round) {
+        this.timeouts.shift();
         let emptyHash = " THIS IS EMPTY HASH!!!!";
 
         let r = this.countVotes(
@@ -575,13 +593,13 @@ module.exports = class StakeClient extends Client {
     announceBlock(status) {
         console.log(this.name, "ANNOUNCING BLOCK!!");
         this.currentBlock.blockStatus = status;
-        setTimeout(() => {
+        this.timeouts.push(setTimeout(() => {
             this.net.broadcast(StakeBlockchain.ANNOUNCE_BLOCK, this.currentBlock);
-        }, 3000);
+        }, 3000));
     }
 
     receiveBlock(block) {
-
+        this.timeouts.shift();
         block = StakeBlockchain.deserializeBlock(block);
 
         // Ignore the block if it has been received previously.
@@ -613,9 +631,9 @@ module.exports = class StakeClient extends Client {
             this.setLastConfirmed();
         }
 
-        setTimeout(() => {
+        this.timeouts.push(setTimeout(() => {
             this.initialize();
-        }, 0);
+        }, 0));
 
     }
 
