@@ -133,7 +133,7 @@ module.exports = class StakeClient extends Client {
             this.countReduceOne(
                 round,
                 "REDUCTION_ONE",
-                0.685,
+                StakeBlockchain.SortitionThresholdStep,
                 StakeBlockchain.CommitteeSize,
                 3 + 2,
             );
@@ -164,7 +164,7 @@ module.exports = class StakeClient extends Client {
 
     reductionTwo(round, step, tau, hblock1) {
         let emptyHash = " THIS IS EMPTY HASH!!!!";
-        if (hblock1 == "TIMEOUT") {
+        if (hblock1 == StakeBlockchain.TIMEOUT) {
             this.committeeVote(
                 round,
                 step,
@@ -184,7 +184,7 @@ module.exports = class StakeClient extends Client {
             this.countReduceTwo(
                 round,
                 "REDUCTION_TWO",
-                0.685,
+                StakeBlockchain.SortitionThresholdStep,
                 StakeBlockchain.CommitteeSize,
                 3 + 2,
             );
@@ -202,7 +202,7 @@ module.exports = class StakeClient extends Client {
 
         let emptyHash = " THIS IS EMPTY HASH!!!!";
 
-        if (hblock2 == "TIMEOUT") hblock2 = emptyHash;
+        if (hblock2 == StakeBlockchain.TIMEOUT) hblock2 = emptyHash;
 
         console.log(this.name, "REDUCTION TWO:", hblock2);
 
@@ -226,7 +226,7 @@ module.exports = class StakeClient extends Client {
             this.binaryBAStarCountStageOne(
                 round,
                 step,
-                0.685,
+                StakeBlockchain.SortitionThresholdStep,
                 StakeBlockchain.CommitteeSize,
                 r,
                 3 + 2,
@@ -248,7 +248,7 @@ module.exports = class StakeClient extends Client {
 
         console.log(this.name, "[1] Votes:", r);
 
-        if (r == "TIMEOUT") {
+        if (r == StakeBlockchain.TIMEOUT) {
             r = hblock;
             console.log(this.name, "TIMED OUT STAGE:", step);
         } else if (r != emptyHash) {
@@ -264,7 +264,7 @@ module.exports = class StakeClient extends Client {
             if (step == 1) {
                 this.committeeVote(
                     round,
-                    'FINAL',
+                    StakeBlockchain.FINAL_CONSENSUS,
                     tau,
                     r
                 );
@@ -297,7 +297,7 @@ module.exports = class StakeClient extends Client {
             this.binaryBAStarCountStageTwo(
                 round,
                 step,
-                0.685,
+                StakeBlockchain.SortitionThresholdStep,
                 StakeBlockchain.CommitteeSize,
                 hblock,
                 3 + 2)
@@ -317,7 +317,7 @@ module.exports = class StakeClient extends Client {
 
         console.log(this.name, "[2] Votes:", r);
 
-        if (r == "TIMEOUT") {
+        if (r == StakeBlockchain.TIMEOUT) {
             r = emptyHash;
             console.log(this.name, "TIMED OUT STAGE:", step);
         } else if (r == emptyHash) {
@@ -357,7 +357,7 @@ module.exports = class StakeClient extends Client {
             this.binaryBAStarCountStageThree(
                 round,
                 step,
-                0.685,
+                StakeBlockchain.SortitionThresholdStep,
                 StakeBlockchain.CommitteeSize,
                 hblock,
                 3 + 2)
@@ -418,8 +418,8 @@ module.exports = class StakeClient extends Client {
 
         let r = this.countVotes(
             round,
-            'FINAL',
-            0.685,
+            StakeBlockchain.FINAL_CONSENSUS,
+            StakeBlockchain.SortitionThresholdFinal,
             StakeBlockchain.CommitteeSize,
             3 + 2,
         );
@@ -427,7 +427,7 @@ module.exports = class StakeClient extends Client {
         if (this.hblockStar == r) {
             console.log(this.name, "FINAL CONSENSUS REACHED!!!");
             if (this.hblockStar === this.currentBlock.hashVal())
-                this.announceBlock('FINAL');
+                this.announceBlock(StakeBlockchain.FINAL_CONSENSUS);
         } else {
             console.log(this.name, "TENTATIVE CONSENSUS REACHED!!!");
             console.log(this.name, "FINAL votes: ", this.hblockStar);
@@ -528,7 +528,7 @@ module.exports = class StakeClient extends Client {
         let voters = new Set();
 
         if (!this.incomingMsgs.has(round) || !this.incomingMsgs.get(round).has(step)) {
-            return "TIMEOUT";
+            return StakeBlockchain.TIMEOUT;
         } else {
             const msgs = this.incomingMsgs.get(round).get(step)[Symbol.iterator]();
 
@@ -536,7 +536,7 @@ module.exports = class StakeClient extends Client {
                 let m = msgs.next().value;
 
                 if (m === undefined) {
-                    return "TIMEOUT";
+                    return StakeBlockchain.TIMEOUT;
                 } else {
                     let { addr } = m;
                     let [votes, value, sorthash] = this.processMsg(tau, m);
@@ -588,11 +588,11 @@ module.exports = class StakeClient extends Client {
         //     if (!success) return null;
         // }
 
-        if (block.blockStatus === 'FINAL') {
+        if (block.blockStatus === StakeBlockchain.FINAL_CONSENSUS) {
             console.log(this.name, 'Recevied a FINAL block. Finalizing all TENTATIVE blocks!');
             for (let [id, block] of this.blocks.entries()) {
-                if (block.blockStatus === 'TENTATIVE') {
-                    block.blockStatus = ' FINAL';
+                if (block.blockStatus === StakeBlockchain.TENATIVE_CONSENSUS) {
+                    block.blockStatus = StakeBlockchain.FINAL_CONSENSUS;
                     this.blocks.set(id, block);
                 }
             }
