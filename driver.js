@@ -1,6 +1,6 @@
 "use strict";
 
-let { BlockChain, Transaction, FakeNet } = require('spartan-gold');
+let { Transaction, FakeNet } = require('spartan-gold');
 let StakeClient = require('./client');
 let StakeBlock = require('./block');
 let StakeBlockchain = require('./blockchain')
