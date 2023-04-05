@@ -7,8 +7,16 @@ const ANNOUNCE_BLOCK = 'ANNOUNCE_BLOCK';
 const ANNOUNCE_PROOF = 'ANNOUNCE_PROOF';
 const COMMITTEE_VOTE = 'COMMITTEE_VOTE';
 const GOSSIP_VOTE = 'GOSSIP_VOTE';
+
 const SortitionThreshold = 2;
-const CommitteeSize = 5;
+const SortitionThresholdStep = 0.685;
+const SortitionThresholdFinal = 0.685;
+
+const FINAL_CONSENSUS = 'FINAL';
+const TENATIVE_CONSENSUS = 'TENTATIVE';
+const TIMEOUT = 'TIMEOUT';
+
+const CommitteeSize = 2;
 
 module.exports = class StakeBlockchain extends Blockchain {
     static get PROPOSE_BLOCK() { return PROPOSE_BLOCK; }
@@ -18,7 +26,12 @@ module.exports = class StakeBlockchain extends Blockchain {
     static get COMMITTEE_VOTE() { return COMMITTEE_VOTE; }
     static get GOSSIP_VOTE() { return GOSSIP_VOTE; }
     static get SortitionThreshold() { return SortitionThreshold; }
+    static get SortitionThresholdStep() { return SortitionThresholdStep; }
+    static get SortitionThresholdFinal() { return SortitionThresholdFinal; }
     static get CommitteeSize() { return CommitteeSize; }
+    static get FINAL_CONSENSUS() { return FINAL_CONSENSUS; }
+    static get TENATIVE_CONSENSUS() { return TENATIVE_CONSENSUS; }
+    static get TIMEOUT() { return TIMEOUT; }
 
     static makeGenesis(...args) {
         let g = super.makeGenesis(...args);
