@@ -7,6 +7,7 @@ const ANNOUNCE_BLOCK = 'ANNOUNCE_BLOCK';
 const ANNOUNCE_PROOF = 'ANNOUNCE_PROOF';
 const COMMITTEE_VOTE = 'COMMITTEE_VOTE';
 const GOSSIP_VOTE = 'GOSSIP_VOTE';
+const TERMINATE_PROPOSAL = 'TERMINATE_PROPOSAL';
 
 const SortitionThreshold = 2;
 const SortitionThresholdStep = 0.685;
@@ -25,6 +26,8 @@ module.exports = class StakeBlockchain extends Blockchain {
     static get CONFIRMED_DEPTH() { return Blockchain.cfg.confirmedDepth; }
     static get COMMITTEE_VOTE() { return COMMITTEE_VOTE; }
     static get GOSSIP_VOTE() { return GOSSIP_VOTE; }
+    static get TERMINATE_PROPOSAL() { return TERMINATE_PROPOSAL; }
+
     static get SortitionThreshold() { return SortitionThreshold; }
     static get SortitionThresholdStep() { return SortitionThresholdStep; }
     static get SortitionThresholdFinal() { return SortitionThresholdFinal; }
