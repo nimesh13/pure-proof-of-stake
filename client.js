@@ -649,4 +649,14 @@ module.exports = class StakeClient extends Client {
         // }
         this.lastConfirmedBlock = this.lastBlock;
     }
+
+    endAll() {
+        this.net.broadcast(StakeBlockchain.TERMINATE_PROPOSAL, {});
+    }
+
+    terminateProposal() {
+        for (const timeoutId of this.timeouts) {
+            clearTimeout(timeoutId);
+        }
+    }
 }
