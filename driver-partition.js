@@ -52,45 +52,54 @@ function showBalances(client) {
 
 async function startAllClients() {
     fakeNet1.register(alice, bob, charlie);
-    let clientArray1 = [alice, bob, charlie];
+    let clientArray = [alice, bob, charlie];
 
     console.log('Starting clients set - 1');
     showBalances(alice);
-    return startClientsWithInterval(clientArray1, 60000)
+    return initClientsWithInterval(clientArray, alice, 15000, 2)
         .then(() => {
             console.log('Starting clients set - 2');
             showBalances(alice);
-            alice.endAll();
+            stopClients([alice, bob, charlie]);
             fakeNet2.register(minnie, mickie, trudy);
-            let clientArray2 = [minnie, mickie, trudy];
-            return startClientsWithInterval(clientArray2, 60000);
+            let clientArray = [minnie, mickie, trudy];
+            return initClientsWithInterval(clientArray, trudy, 15000, 2);
         })
         .then(() => {
             console.log('Starting all the clients together.');
             showBalances(alice);
-            trudy.endAll();
+            stopClients([minnie, mickie, trudy]);
             fakeNet1.register(minnie, mickie, trudy);
             fakeNet2.register(alice, bob, charlie);
-            let combinedClientArray = [alice, bob, charlie, minnie, mickie, trudy];
-            return startClientsWithInterval(combinedClientArray, 60000);
+            let clientArray = [alice, bob, charlie, minnie, mickie, trudy];
+            return initClientsWithInterval(clientArray, minnie, 30000, 0);
+        })
+        .then(() => {
+            process.exit(0);
         })
         .catch(e => {
             console.log('Error: ', e);
         });
 }
 
-function initClients(clients) {
+function initClients(clients, stop) {
     clients.forEach(client => {
-        client.initialize();
+        client.initialize(stop);
     });
 }
 
-function startClientsWithInterval(clients, time) {
+function stopClients(clients) {
+    clients.forEach(client => {
+        client.terminateProposal();
+    })
+}
+
+function initClientsWithInterval(clients, client, time, stop) {
     return new Promise((resolve) => {
         setTimeout(() => {
             return resolve();
         }, time);
-        initClients(clients);
+        initClients(clients, stop);
     });
 }
 
