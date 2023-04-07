@@ -33,11 +33,13 @@ module.exports = class StakeClient extends Client {
     /**
     * Starts listeners and begins mining.
     */
-    initialize() {
+    initialize(stop = 0) {
         this.timeouts.shift();
 
         this.proposals = {};
         this.currentBlock = StakeBlockchain.makeBlock(this.address, this.lastBlock);
+
+        if (stop && this.currentBlock.chainLength === stop) return;
 
         // calculate this seed from last Block.
         let seed = "seed";
@@ -46,7 +48,7 @@ module.exports = class StakeClient extends Client {
         this.ctx = this.currentBlock.getContext(seed);
         this.hblockStar = null;
 
-        this.timeouts.push(setTimeout(() => this.emit(StakeBlockchain.PROPOSE_BLOCK), 1000));
+        this.timeouts.push(setTimeout(() => this.emit(StakeBlockchain.PROPOSE_BLOCK), 4000));
     }
 
     proposeBlock() {
@@ -651,12 +653,16 @@ module.exports = class StakeClient extends Client {
     }
 
     endAll() {
+        console.log(this.name, 'Initiating Termination.');
         this.net.broadcast(StakeBlockchain.TERMINATE_PROPOSAL, {});
     }
 
     terminateProposal() {
+        console.log(this.name, 'Received Termination Request.');
         for (const timeoutId of this.timeouts) {
             clearTimeout(timeoutId);
         }
+        this.timeouts.shift();
+        return;
     }
 }
