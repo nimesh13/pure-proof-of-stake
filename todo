@@ -3,7 +3,6 @@ use built in logger
 proposal class
 add ctx as local variable instead of global state
 add constants to separate file
-create empty_hash from previous blocks
 drop msgs randomly
 comments
 get hashlen in common coin
