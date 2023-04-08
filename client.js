@@ -48,7 +48,7 @@ module.exports = class StakeClient extends Client {
         this.ctx = this.currentBlock.getContext(seed);
         this.hblockStar = null;
 
-        this.timeouts.push(setTimeout(() => this.emit(StakeBlockchain.PROPOSE_BLOCK), 4000));
+        this.timeouts.push(setTimeout(() => this.emit(StakeBlockchain.PROPOSE_BLOCK), 1000));
     }
 
     proposeBlock() {
@@ -179,7 +179,7 @@ module.exports = class StakeClient extends Client {
 
     reductionTwo(round, step, tau, hblock1) {
         this.timeouts.shift();
-        let emptyHash = " THIS IS EMPTY HASH!!!!";
+        let emptyHash = utils.hash(round + this.currentBlock.prevBlockHash);
         if (hblock1 == StakeBlockchain.TIMEOUT) {
             this.committeeVote(
                 round,
@@ -217,7 +217,7 @@ module.exports = class StakeClient extends Client {
             lambda,
         );
 
-        let emptyHash = " THIS IS EMPTY HASH!!!!";
+        let emptyHash = utils.hash(round + this.currentBlock.prevBlockHash);
 
         if (hblock2 == StakeBlockchain.TIMEOUT) hblock2 = emptyHash;
 
@@ -255,7 +255,7 @@ module.exports = class StakeClient extends Client {
 
     binaryBAStarCountStageOne(round, step, T, tau, hblock, lambda) {
         this.timeouts.shift();
-        let emptyHash = " THIS IS EMPTY HASH!!!!";
+        let emptyHash = utils.hash(round + this.currentBlock.prevBlockHash);
 
         let r = this.countVotes(
             round,
@@ -326,7 +326,7 @@ module.exports = class StakeClient extends Client {
 
     binaryBAStarCountStageTwo(round, step, T, tau, hblock, lambda) {
         this.timeouts.shift();
-        let emptyHash = " THIS IS EMPTY HASH!!!!";
+        let emptyHash = utils.hash(round + this.currentBlock.prevBlockHash);
 
         let r = this.countVotes(
             round,
@@ -388,7 +388,7 @@ module.exports = class StakeClient extends Client {
 
     binaryBAStarCountStageThree(round, step, T, tau, hblock, lambda) {
         this.timeouts.shift();
-        let emptyHash = " THIS IS EMPTY HASH!!!!";
+        let emptyHash = utils.hash(round + this.currentBlock.prevBlockHash);
 
         let r = this.countVotes(
             round,
@@ -438,7 +438,7 @@ module.exports = class StakeClient extends Client {
 
     BAStar(round) {
         this.timeouts.shift();
-        let emptyHash = " THIS IS EMPTY HASH!!!!";
+        let emptyHash = utils.hash(round + this.currentBlock.prevBlockHash);
 
         let r = this.countVotes(
             round,
