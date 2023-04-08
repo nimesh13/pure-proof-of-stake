@@ -3,11 +3,9 @@ use built in logger
 proposal class
 add ctx as local variable instead of global state
 add constants to separate file
-create empty blocks
 create empty_hash from previous blocks
 drop msgs randomly
 comments
-what happens when nobody is proposing blocks - &&&& is passed around
 get hashlen in common coin
 toggle info and debug logs
 command line argument for delays
