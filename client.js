@@ -2,7 +2,7 @@
 
 let { Client, utils } = require('spartan-gold');
 let StakeBlockchain = require('./blockchain');
-let { getHighestPriorityToken, verifySort, sign, verifySignature, getRandomInt } = require('./utils');
+let { getHighestPriorityToken, verifySort, sign, verifySignature } = require('./utils');
 const BigInteger = require('jsbn').BigInteger;
 
 const elliptic = require('elliptic');
@@ -122,9 +122,7 @@ module.exports = class StakeClient extends Client {
         }
 
         if (winningBlockhash === "&&&&&") {
-            this.timeouts.push(setTimeout(() => {
-                this.initialize();
-            }, 0));
+            this.addEmptyBlock();
         } else {
             this.timeouts.push(setTimeout(() => this.reductionOne(
                 this.currentBlock.chainLength,
@@ -452,19 +450,20 @@ module.exports = class StakeClient extends Client {
 
         if (this.hblockStar == r) {
             console.log(this.name, "FINAL CONSENSUS REACHED!!!");
-            if (this.hblockStar === this.currentBlock.hashVal())
-                this.announceBlock(StakeBlockchain.FINAL_CONSENSUS);
+            if (this.hblockStar === this.currentBlock.hashVal()) {
+                this.currentBlock.blockStatus = StakeBlockchain.FINAL_CONSENSUS;
+                this.announceBlock();
+            }
         } else {
             console.log(this.name, "TENTATIVE CONSENSUS REACHED!!!");
             console.log(this.name, "FINAL votes: ", this.hblockStar);
             console.log(this.name, "R: ", r);
-            console.log(this.name, this.identity);
-            if (this.hblockStar === emptyHash && getRandomInt(3) == this.identity) {
-                this.currentBlock.rewardAddr = null;
-                this.announceBlock('TENATIVE');
+            this.currentBlock.blockStatus = StakeBlockchain.TENATIVE_CONSENSUS;
+            if (this.hblockStar === emptyHash) {
+                this.addEmptyBlock();
             }
             else if (this.hblockStar === this.currentBlock.hashVal())
-                this.announceBlock('TENATIVE');
+                this.announceBlock();
         }
         return;
     }
@@ -592,9 +591,14 @@ module.exports = class StakeClient extends Client {
         this.incomingMsgs.get(round).get(step).push(vote);
     }
 
-    announceBlock(status) {
+    addEmptyBlock() {
+        console.log(this.name, "ADDING EMPTY BLOCK!!");
+        this.currentBlock.rewardAddr = null;
+        this.receiveBlock(this.currentBlock);
+    }
+
+    announceBlock() {
         console.log(this.name, "ANNOUNCING BLOCK!!");
-        this.currentBlock.blockStatus = status;
         this.timeouts.push(setTimeout(() => {
             this.net.broadcast(StakeBlockchain.ANNOUNCE_BLOCK, this.currentBlock);
         }, 3000));
