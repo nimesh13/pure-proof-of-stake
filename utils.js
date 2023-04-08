@@ -117,7 +117,3 @@ exports.verifySignature = function (pubKey, msg, sig) {
     let binaryMessage = Buffer.from(str);
     return key.verify(binaryMessage, sig);
 };
-
-exports.getRandomInt = function (max) {
-    return Math.floor(Math.random() * max);
-}
