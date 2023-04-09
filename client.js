@@ -42,7 +42,10 @@ module.exports = class StakeClient extends Client {
         if (!this.stopAfter)
             this.stopAfter = stopAfter;
 
-        if (stopAfter && this.currentBlock.chainLength === stopAfter) return;
+        if (stopAfter && this.currentBlock.chainLength === stopAfter) {
+            delete this.stopAfter;
+            return;
+        }
 
         let [newSeed, _] = utils.calcNewSeed(this.keyPair.getPrivate(), this.lastBlock.seed, this.currentBlock.chainLength);
         this.currentBlock.seed = Buffer.from(newSeed).toString('hex');
