@@ -6,7 +6,7 @@ const BigInteger = require('jsbn').BigInteger;
 const elliptic = require('elliptic');
 const EC = new elliptic.ec('secp256k1');
 
-exports.getHighestPriorityToken = function HighestPriorityToken(
+exports.getHighestPriorityToken = function (
     privateKey,
     seed,
     tau,
@@ -27,7 +27,11 @@ exports.getHighestPriorityToken = function HighestPriorityToken(
     return [hash, proof, j, maxPriorityToken];
 }
 
-exports.verifySort = function VerifySort(obj) {
+exports.vrf = function vrf(sk, data) {
+    return Evaluate(sk, data);
+}
+
+exports.verifySort = function (obj) {
 
     try {
         const index = ProofHoHash(obj.publicKey, obj.data, obj.proof);
@@ -117,3 +121,7 @@ exports.verifySignature = function (pubKey, msg, sig) {
     let binaryMessage = Buffer.from(str);
     return key.verify(binaryMessage, sig);
 };
+
+exports.calcNewSeed = function (privateKey, seed, round) {
+    return Evaluate(privateKey.toArray(), seed + round);
+}
