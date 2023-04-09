@@ -1,6 +1,6 @@
 "use strict";
 
-const { Block, utils } = require("spartan-gold");
+const { Block } = require("spartan-gold");
 
 module.exports = class StakeBlock extends Block {
 
