@@ -44,7 +44,9 @@ module.exports = class StakeClient extends Client {
 
         if (stopAfter && this.currentBlock.chainLength === stopAfter) return;
 
-        this.ctx = this.currentBlock.getContext(seed);
+        let [newSeed, _] = utils.calcNewSeed(this.keyPair.getPrivate(), this.lastBlock.seed, this.currentBlock.chainLength);
+        this.currentBlock.seed = Buffer.from(newSeed).toString('hex');
+        this.ctx = this.currentBlock.getContext(this.currentBlock.seed);
         this.hblockStar = null;
 
         this.timeouts.push(setTimeout(() => this.emit(StakeBlockchain.PROPOSE_BLOCK), 1000));
