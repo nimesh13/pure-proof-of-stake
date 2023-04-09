@@ -1,8 +1,8 @@
 "use strict";
 
-let { Client, utils } = require('spartan-gold');
+let { Client, utils: SGUtils } = require('spartan-gold');
 let StakeBlockchain = require('./blockchain');
-let { getHighestPriorityToken, verifySort, sign, verifySignature } = require('./utils');
+let utils = require('./utils');
 const BigInteger = require('jsbn').BigInteger;
 
 const elliptic = require('elliptic');
@@ -15,7 +15,7 @@ module.exports = class StakeClient extends Client {
 
         this.identity = args[0]["identity"];
         this.keyPair = EC.genKeyPair();
-        this.address = utils.calcAddress(this.keyPair.getPublic().encode().toString());
+        this.address = SGUtils.calcAddress(this.keyPair.getPublic().encode().toString());
 
         this.on(StakeBlockchain.PROPOSE_BLOCK, this.proposeBlock);
         this.on(StakeBlockchain.ANNOUNCE_PROOF, this.receiveProof);
@@ -33,17 +33,16 @@ module.exports = class StakeClient extends Client {
     /**
     * Starts listeners and begins mining.
     */
-    initialize(stop = 0) {
+    initialize(stopAfter = 0) {
         this.timeouts.shift();
 
         this.proposals = {};
         this.currentBlock = StakeBlockchain.makeBlock(this.address, this.lastBlock);
 
-        if (stop && this.currentBlock.chainLength === stop) return;
+        if (!this.stopAfter)
+            this.stopAfter = stopAfter;
 
-        // calculate this seed from last Block.
-        let seed = "seed";
-        this.currentBlock.seed = seed;
+        if (stopAfter && this.currentBlock.chainLength === stopAfter) return;
 
         this.ctx = this.currentBlock.getContext(seed);
         this.hblockStar = null;
@@ -52,15 +51,15 @@ module.exports = class StakeClient extends Client {
     }
 
     proposeBlock() {
-
         this.timeouts.shift();
+
         let role = "proposer";
         let data = this.ctx.seed + role;
         let w = this.currentBlock.balanceOf(this.address);
         let W = this.currentBlock.getTotalCoins();
         let tau = StakeBlockchain.SortitionThreshold;
 
-        let [hash, proof, j, maxPriorityToken] = getHighestPriorityToken(
+        let [hash, proof, j, maxPriorityToken] = utils.getHighestPriorityToken(
             this.keyPair.getPrivate(),
             this.ctx.seed,
             tau,
@@ -101,7 +100,7 @@ module.exports = class StakeClient extends Client {
     receiveProof(o) {
 
         console.log(this.name, "Collecting all proposals!");
-        let [j, maxPriorityToken] = verifySort(o);
+        let [j, maxPriorityToken] = utils.verifySort(o);
         if (j > 0)
             this.proposals[o.blockhash] = o;
     }
@@ -179,7 +178,7 @@ module.exports = class StakeClient extends Client {
 
     reductionTwo(round, step, tau, hblock1) {
         this.timeouts.shift();
-        let emptyHash = utils.hash(round + this.currentBlock.prevBlockHash);
+        let emptyHash = SGUtils.hash(round + this.currentBlock.prevBlockHash);
         if (hblock1 == StakeBlockchain.TIMEOUT) {
             this.committeeVote(
                 round,
@@ -217,7 +216,7 @@ module.exports = class StakeClient extends Client {
             lambda,
         );
 
-        let emptyHash = utils.hash(round + this.currentBlock.prevBlockHash);
+        let emptyHash = SGUtils.hash(round + this.currentBlock.prevBlockHash);
 
         if (hblock2 == StakeBlockchain.TIMEOUT) hblock2 = emptyHash;
 
@@ -255,7 +254,7 @@ module.exports = class StakeClient extends Client {
 
     binaryBAStarCountStageOne(round, step, T, tau, hblock, lambda) {
         this.timeouts.shift();
-        let emptyHash = utils.hash(round + this.currentBlock.prevBlockHash);
+        let emptyHash = SGUtils.hash(round + this.currentBlock.prevBlockHash);
 
         let r = this.countVotes(
             round,
@@ -326,7 +325,7 @@ module.exports = class StakeClient extends Client {
 
     binaryBAStarCountStageTwo(round, step, T, tau, hblock, lambda) {
         this.timeouts.shift();
-        let emptyHash = utils.hash(round + this.currentBlock.prevBlockHash);
+        let emptyHash = SGUtils.hash(round + this.currentBlock.prevBlockHash);
 
         let r = this.countVotes(
             round,
@@ -388,7 +387,7 @@ module.exports = class StakeClient extends Client {
 
     binaryBAStarCountStageThree(round, step, T, tau, hblock, lambda) {
         this.timeouts.shift();
-        let emptyHash = utils.hash(round + this.currentBlock.prevBlockHash);
+        let emptyHash = SGUtils.hash(round + this.currentBlock.prevBlockHash);
 
         let r = this.countVotes(
             round,
@@ -426,7 +425,7 @@ module.exports = class StakeClient extends Client {
                 if (m == undefined) break;
                 let [votes, value, sorthash] = this.processMsg(tau, m);
                 for (let j = 0; j < votes; j++) {
-                    let hash = utils.hash(sorthash + j);
+                    let hash = SGUtils.hash(sorthash + j);
                     let h = new BigInteger(hash, 16);
                     if (h < minHash)
                         minHash = h;
@@ -438,7 +437,7 @@ module.exports = class StakeClient extends Client {
 
     BAStar(round) {
         this.timeouts.shift();
-        let emptyHash = utils.hash(round + this.currentBlock.prevBlockHash);
+        let emptyHash = SGUtils.hash(round + this.currentBlock.prevBlockHash);
 
         let r = this.countVotes(
             round,
@@ -473,7 +472,7 @@ module.exports = class StakeClient extends Client {
         // check if user is in committee using Sortition
         let role = "committee" + round + step;
 
-        const [hash, proof, j, _] = getHighestPriorityToken(
+        const [hash, proof, j, _] = utils.getHighestPriorityToken(
             this.keyPair.getPrivate(),
             this.ctx.seed,
             tau,
@@ -497,7 +496,7 @@ module.exports = class StakeClient extends Client {
             let obj = {
                 pk: this.keyPair.getPublic(),
                 msg,
-                sig: sign(this.keyPair.getPrivate(), msg),
+                sig: utils.sign(this.keyPair.getPrivate(), msg),
                 addr: this.address,
                 voter: this.name,
                 round,
@@ -511,7 +510,7 @@ module.exports = class StakeClient extends Client {
     processMsg(tau, m) {
         let { pk, msg, sig } = m;
 
-        if (!verifySignature(pk, msg, sig)) {
+        if (!utils.verifySignature(pk, msg, sig)) {
             console.log(this.name, "Invalid signature!");
             return [0, null, null];
         }
@@ -543,7 +542,7 @@ module.exports = class StakeClient extends Client {
             data: this.ctx.seed + role,
         };
 
-        let [j, _] = verifySort(obj);
+        let [j, _] = utils.verifySort(obj);
 
         return [j, value, sorthash];
     }
@@ -594,7 +593,10 @@ module.exports = class StakeClient extends Client {
     addEmptyBlock() {
         console.log(this.name, "ADDING EMPTY BLOCK!!");
         this.currentBlock.rewardAddr = null;
-        this.receiveBlock(this.currentBlock);
+        this.timeouts.push(
+            setTimeout(() => this.receiveBlock(this.currentBlock),
+                0
+            ));
     }
 
     announceBlock() {
@@ -638,7 +640,7 @@ module.exports = class StakeClient extends Client {
         }
 
         this.timeouts.push(setTimeout(() => {
-            this.initialize();
+            this.initialize(this.stopAfter);
         }, 0));
 
     }
