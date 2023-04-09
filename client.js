@@ -41,7 +41,6 @@ module.exports = class StakeClient extends Client {
 
         if (!this.stopAfter)
             this.stopAfter = stopAfter;
-
         if (stopAfter && this.currentBlock.chainLength === stopAfter) {
             delete this.stopAfter;
             return;
@@ -52,7 +51,9 @@ module.exports = class StakeClient extends Client {
         this.ctx = this.currentBlock.getContext(this.currentBlock.seed);
         this.hblockStar = null;
 
+        // if (!stopAfter)
         this.timeouts.push(setTimeout(() => this.emit(StakeBlockchain.PROPOSE_BLOCK), 1000));
+        // else this.addEmptyBlock();
     }
 
     proposeBlock() {
