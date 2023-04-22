@@ -246,7 +246,7 @@ module.exports = class StakeClient extends Client {
         );
 
         this.timeouts.push(setTimeout(() => {
-            this.binaryBAStarCountStageOne(
+            this.countBinaryBAStarStageOne(
                 round,
                 step,
                 StakeBlockchain.SortitionThresholdStep,
@@ -258,7 +258,7 @@ module.exports = class StakeClient extends Client {
             6000));
     }
 
-    binaryBAStarCountStageOne(round, step, T, tau, hblock, lambda) {
+    countBinaryBAStarStageOne(round, step, T, tau, hblock, lambda) {
         this.timeouts.shift();
         let emptyHash = SGUtils.hash(round + this.currentBlock.prevBlockHash);
 
@@ -319,7 +319,7 @@ module.exports = class StakeClient extends Client {
         );
 
         this.timeouts.push(setTimeout(() => {
-            this.binaryBAStarCountStageTwo(
+            this.countBinaryBAStarStageTwo(
                 round,
                 step,
                 StakeBlockchain.SortitionThresholdStep,
@@ -329,7 +329,7 @@ module.exports = class StakeClient extends Client {
         }, 6000));
     }
 
-    binaryBAStarCountStageTwo(round, step, T, tau, hblock, lambda) {
+    countBinaryBAStarStageTwo(round, step, T, tau, hblock, lambda) {
         this.timeouts.shift();
         let emptyHash = SGUtils.hash(round + this.currentBlock.prevBlockHash);
 
@@ -381,7 +381,7 @@ module.exports = class StakeClient extends Client {
         );
 
         this.timeouts.push(setTimeout(() => {
-            this.binaryBAStarCountStageThree(
+            this.countBinaryBAStarStageThree(
                 round,
                 step,
                 StakeBlockchain.SortitionThresholdStep,
@@ -391,7 +391,7 @@ module.exports = class StakeClient extends Client {
         }, 6000));
     }
 
-    binaryBAStarCountStageThree(round, step, T, tau, hblock, lambda) {
+    countBinaryBAStarStageThree(round, step, T, tau, hblock, lambda) {
         this.timeouts.shift();
         let emptyHash = SGUtils.hash(round + this.currentBlock.prevBlockHash);
 
