@@ -13,7 +13,6 @@ module.exports = class StakeClient extends Client {
     constructor(...args) {
         super(...args);
 
-        this.identity = args[0]["identity"];
         this.keyPair = EC.genKeyPair();
         this.address = SGUtils.calcAddress(this.keyPair.getPublic().encode().toString());
 
