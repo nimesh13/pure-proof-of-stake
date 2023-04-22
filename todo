@@ -7,3 +7,5 @@ comments
 get hashlen in common coin
 toggle info and debug logs
 command line argument for delays
+remove identity
+calculate the lowest hash not the maximum
