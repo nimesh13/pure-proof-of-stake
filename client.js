@@ -143,7 +143,7 @@ module.exports = class StakeClient extends Client {
         console.log(this.name, "Reduction step!!!!");
         this.committeeVote(
             round,
-            "REDUCTION_ONE",
+            StakeBlockchain.REDUCTION_ONE,
             StakeBlockchain.CommitteeSize,
             hblock
         );
@@ -151,7 +151,7 @@ module.exports = class StakeClient extends Client {
         this.timeouts.push(setTimeout(() => {
             this.countReduceOne(
                 round,
-                "REDUCTION_ONE",
+                StakeBlockchain.REDUCTION_ONE,
                 StakeBlockchain.SortitionThresholdStep,
                 StakeBlockchain.CommitteeSize,
                 3 + 2,
@@ -174,7 +174,7 @@ module.exports = class StakeClient extends Client {
         this.timeouts.push(setTimeout(() => {
             this.reductionTwo(
                 round,
-                "REDUCTION_TWO",
+                StakeBlockchain.REDUCTION_TWO,
                 StakeBlockchain.CommitteeSize,
                 hblock1,
             );
@@ -204,7 +204,7 @@ module.exports = class StakeClient extends Client {
         this.timeouts.push(setTimeout(() => {
             this.countReduceTwo(
                 round,
-                "REDUCTION_TWO",
+                StakeBlockchain.REDUCTION_TWO,
                 StakeBlockchain.SortitionThresholdStep,
                 StakeBlockchain.CommitteeSize,
                 3 + 2,

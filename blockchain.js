@@ -13,6 +13,9 @@ const SortitionThreshold = 2;
 const SortitionThresholdStep = 0.685;
 const SortitionThresholdFinal = 0.685;
 
+const REDUCTION_ONE = 'REDUCTION_ONE';
+const REDUCTION_TWO = 'REDUCTION_TWO';
+
 const FINAL_CONSENSUS = 'FINAL';
 const TENATIVE_CONSENSUS = 'TENTATIVE';
 const TIMEOUT = 'TIMEOUT';
@@ -28,10 +31,14 @@ module.exports = class StakeBlockchain extends Blockchain {
     static get GOSSIP_VOTE() { return GOSSIP_VOTE; }
     static get TERMINATE_PROPOSAL() { return TERMINATE_PROPOSAL; }
 
+    static get REDUCTION_ONE() { return REDUCTION_ONE; }
+    static get REDUCTION_TWO() { return REDUCTION_TWO; }
+
     static get SortitionThreshold() { return SortitionThreshold; }
     static get SortitionThresholdStep() { return SortitionThresholdStep; }
     static get SortitionThresholdFinal() { return SortitionThresholdFinal; }
     static get CommitteeSize() { return CommitteeSize; }
+
     static get FINAL_CONSENSUS() { return FINAL_CONSENSUS; }
     static get TENATIVE_CONSENSUS() { return TENATIVE_CONSENSUS; }
     static get TIMEOUT() { return TIMEOUT; }
