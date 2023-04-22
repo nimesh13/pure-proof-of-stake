@@ -11,14 +11,14 @@ let fakeNet1 = new FakeNet();
 let fakeNet2 = new FakeNet();
 
 // Clients
-let alice = new StakeClient({ name: "Alice", net: fakeNet1, identity: 1 });
-let bob = new StakeClient({ name: "Bob", net: fakeNet1, identity: 2 });
-let charlie = new StakeClient({ name: "Charlie", net: fakeNet1, identity: 3 });
+let alice = new StakeClient({ name: "Alice", net: fakeNet1 });
+let bob = new StakeClient({ name: "Bob", net: fakeNet1 });
+let charlie = new StakeClient({ name: "Charlie", net: fakeNet1 });
 
 // Byzantine Client
-let mickie = new StakeClient({ name: "Mickie", net: fakeNet2, identity: 4 });
-let minnie = new StakeClient({ name: "Minnie", net: fakeNet2, identity: 5 });
-let trudy = new StakeClient({ name: "Trudy", net: fakeNet2, identity: 6 });
+let mickie = new StakeClient({ name: "Mickie", net: fakeNet2 });
+let minnie = new StakeClient({ name: "Minnie", net: fakeNet2 });
+let trudy = new StakeClient({ name: "Trudy", net: fakeNet2 });
 
 let genesisSeed = "########## THIS IS GENESIS BLOCK SEED FOR CS298 ##########";
 
@@ -56,14 +56,14 @@ async function startAllClients() {
 
     console.log('Starting clients set - 1');
     showBalances(alice);
-    return initClientsWithInterval(clientArray, alice, 15000, 2)
+    return initClientsWithInterval(clientArray, alice, 5000, 2)
         .then(() => {
             console.log('Starting clients set - 2');
             showBalances(alice);
             stopClients([alice, bob, charlie]);
             fakeNet2.register(minnie, mickie, trudy);
             let clientArray = [minnie, mickie, trudy];
-            return initClientsWithInterval(clientArray, trudy, 15000, 2);
+            return initClientsWithInterval(clientArray, trudy, 5000, 2);
         })
         .then(() => {
             console.log('Starting all the clients together.');
