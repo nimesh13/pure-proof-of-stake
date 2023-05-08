@@ -60,7 +60,7 @@ module.exports = class StakeClient extends Client {
         let data = this.ctx.seed + role;
         let w = this.currentBlock.balanceOf(this.address);
         let W = this.currentBlock.getTotalCoins();
-        let tau = StakeBlockchain.SortitionThreshold;
+        let tau = StakeBlockchain.SORTITION_THRESHOLD;
 
         let [hash, proof, j, maxPriorityToken] = utils.getHighestPriorityToken(
             this.keyPair.getPrivate(),
@@ -150,7 +150,7 @@ module.exports = class StakeClient extends Client {
             this.countReduceOne(
                 round,
                 StakeBlockchain.REDUCTION_ONE,
-                StakeBlockchain.SortitionThresholdStep,
+                StakeBlockchain.SORTITION_THRESHOLD_STEP,
                 StakeBlockchain.CommitteeSize,
                 3 + 2,
             );
@@ -204,7 +204,7 @@ module.exports = class StakeClient extends Client {
             this.countReduceTwo(
                 round,
                 StakeBlockchain.REDUCTION_TWO,
-                StakeBlockchain.SortitionThresholdStep,
+                StakeBlockchain.SORTITION_THRESHOLD_STEP,
                 StakeBlockchain.CommitteeSize,
                 3 + 2,
             );
@@ -248,7 +248,7 @@ module.exports = class StakeClient extends Client {
             this.countBinaryBAStarStageOne(
                 round,
                 step,
-                StakeBlockchain.SortitionThresholdStep,
+                StakeBlockchain.SORTITION_THRESHOLD_STEP,
                 StakeBlockchain.CommitteeSize,
                 r,
                 3 + 2,
@@ -320,7 +320,7 @@ module.exports = class StakeClient extends Client {
             this.countBinaryBAStarStageTwo(
                 round,
                 step,
-                StakeBlockchain.SortitionThresholdStep,
+                StakeBlockchain.SORTITION_THRESHOLD_STEP,
                 StakeBlockchain.CommitteeSize,
                 hblock,
                 3 + 2)
@@ -381,7 +381,7 @@ module.exports = class StakeClient extends Client {
             this.countBinaryBAStarStageThree(
                 round,
                 step,
-                StakeBlockchain.SortitionThresholdStep,
+                StakeBlockchain.SORTITION_THRESHOLD_STEP,
                 StakeBlockchain.CommitteeSize,
                 hblock,
                 3 + 2)
@@ -444,7 +444,7 @@ module.exports = class StakeClient extends Client {
         let r = this.countVotes(
             round,
             StakeBlockchain.FINAL_CONSENSUS,
-            StakeBlockchain.SortitionThresholdFinal,
+            StakeBlockchain.SORTITION_THRESHOLD_FINAL,
             StakeBlockchain.CommitteeSize,
             3 + 2,
         );
