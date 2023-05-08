@@ -23,15 +23,15 @@ let genesis = StakeBlockchain.makeGenesis({
     clientBalanceMap: new Map([
         [alice, 15],
         [bob, 10],
-        [charlie, 7],
+        [charlie, 20],
     ]),
     seed: genesisSeed,
 });
 
 function showBalances(client) {
-    console.log(`Alice has ${client.lastBlock.balanceOf(alice.address)} gold.`);
-    console.log(`Bob has ${client.lastBlock.balanceOf(bob.address)} gold.`);
-    console.log(`Charlie has ${client.lastBlock.balanceOf(charlie.address)} gold.`);
+    console.log(`[ Alice ] Balance: ${client.lastBlock.balanceOf(alice.address)} gold.`);
+    console.log(`[ Bob ] Balance: ${client.lastBlock.balanceOf(bob.address)} gold.`);
+    console.log(`[ Charlie ] Balance: ${client.lastBlock.balanceOf(charlie.address)} gold.`);
 }
 
 // Showing the initial balances from Alice's perspective, for no particular reason.
@@ -51,4 +51,4 @@ setTimeout(() => {
     showBalances(alice);
 
     process.exit(0);
-}, 100000);
+}, 120000);
