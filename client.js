@@ -53,6 +53,12 @@ module.exports = class StakeClient extends Client {
         else this.addEmptyBlock();
     }
 
+    /**
+     * Proposes block by running the cryptographic sortition to
+     * check if the client is selected or not. If they are selected,
+     * they broadcast the hash and proof else they wait for 
+     * receiving all proposals and finding the winner.
+     */
     proposeBlock() {
         this.timeouts.shift();
 
@@ -100,6 +106,12 @@ module.exports = class StakeClient extends Client {
         this.timeouts.push(setTimeout(() => this.findWinningProposal(), 2000));
     }
 
+    /**
+     * Stores the proofs of all the client broadcasts from the block proposal
+     * stage. Runs the cryptographic sortition again to verify them.
+     * 
+     * @param {Object} o - Takes in the proof broadcasted by the proposers. 
+     */
     receiveProof(o) {
 
         this.log("[ RECEIVE_PROOF ] Received a proposal.");
@@ -108,6 +120,12 @@ module.exports = class StakeClient extends Client {
             this.proposals[o.blockhash] = o;
     }
 
+    /**
+     * Finds the winning block proposals from all the stored
+     * block proposals or proofs. Starts reduction if at least
+     * one proposal was received else starts adding an empty
+     * block.
+     */
     findWinningProposal() {
         this.timeouts.shift();
 
@@ -136,6 +154,15 @@ module.exports = class StakeClient extends Client {
         }
     }
 
+    /**
+     * This is the first step of BA*. Reduction in the original
+     * algorithm is broken into two separate components.
+     * reductionOne votes for the first step,
+     * REDUCTION_ONE 
+     * 
+     * @param {Number} round - the current round number.
+     * @param {String} hblock - the block hash BA* is initialised with.
+     */
     reductionOne(round, hblock) {
         this.timeouts.shift();
         this.log("[ REDUCTION_ONE ] Voting..");
@@ -157,6 +184,16 @@ module.exports = class StakeClient extends Client {
         }, 3100));
     }
 
+    /**
+     * Counts votes for the first step of Reduction, REDUCTION_ONE. 
+     * Passes the block hash to the second step.
+     * 
+     * @param {Number} round - the current round number.
+     * @param {String} step - the step in the current round.
+     * @param {Number} T - the sortition threshold for the current step.
+     * @param {Number} tau - committee size for the given step to declare majority.
+     * @param {Number} lambda - the time clients should wait to receive all votes before counting.
+     */
     countReduceOne(round, step, T, tau, lambda) {
         this.timeouts.shift();
         let hblock1 = this.countVotes(
@@ -180,6 +217,16 @@ module.exports = class StakeClient extends Client {
 
     }
 
+    /**
+     * Second step of Reduction, REDUCTION_TWO, where clients 
+     * vote for either empty_hash or block_hash based on the votes
+     * counted in the first step.
+     * 
+     * @param {Number} round - the current round number.
+     * @param {String} step - the current step in the given round.
+     * @param {Number} tau - committee size for the given step to declare majority.
+     * @param {String} hblock1 - the block hash realised in REDUCTION_ONE
+     */
     reductionTwo(round, step, tau, hblock1) {
         this.timeouts.shift();
         this.log("[ REDUCTION_TWO ] Voting..");
@@ -211,6 +258,17 @@ module.exports = class StakeClient extends Client {
         }, 3100));
     }
 
+    /**
+     * Counts votes for the second step, REDUCTION_TWO.
+     * Passes either empty_hash or block_hash to the next stage,
+     * BinaryBA*.
+     * 
+     * @param {Number} round - the current round number.
+     * @param {String} step - the current step in the given round.
+     * @param {Number} T - the sortition threshold for the current step.
+     * @param {Number} tau - committee size for the given step to declare majority.
+     * @param {Number} lambda - the time clients should wait to receive all votes before counting.
+     */
     countReduceTwo(round, step, T, tau, lambda) {
         this.timeouts.shift();
         let hblock2 = this.countVotes(
