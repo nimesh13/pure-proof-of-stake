@@ -45,14 +45,12 @@ module.exports = class StakeClient extends Client {
             return;
         }
 
-        let [newSeed, _] = utils.calcNewSeed(this.keyPair.getPrivate(), this.lastBlock.seed, this.currentBlock.chainLength);
-        this.currentBlock.seed = Buffer.from(newSeed).toString('hex');
-        this.ctx = this.currentBlock.getContext(this.currentBlock.seed);
+        this.ctx = this.currentBlock.getContext(this.lastBlock.seed);
         this.hblockStar = null;
 
-        // if (!stopAfter)
-        this.timeouts.push(setTimeout(() => this.emit(StakeBlockchain.PROPOSE_BLOCK), 1000));
-        // else this.addEmptyBlock();
+        if (!stopAfter)
+            this.timeouts.push(setTimeout(() => this.emit(StakeBlockchain.PROPOSE_BLOCK), 1000));
+        else this.addEmptyBlock();
     }
 
     proposeBlock() {
@@ -104,7 +102,7 @@ module.exports = class StakeClient extends Client {
 
     receiveProof(o) {
 
-        this.log("[ RECEIVE_PROOF ] Collecting all proposals.");
+        this.log("[ RECEIVE_PROOF ] Received a proposal.");
         let [j, maxPriorityToken] = utils.verifySort(o);
         if (j > 0)
             this.proposals[o.blockhash] = o;
@@ -126,6 +124,7 @@ module.exports = class StakeClient extends Client {
         }
 
         if (winningBlockhash === "&&&&&") {
+            this.log("[ RECEIVE_PROOF ] No proposals received.");
             this.addEmptyBlock();
         } else {
             this.timeouts.push(setTimeout(() => this.reductionOne(
@@ -155,7 +154,7 @@ module.exports = class StakeClient extends Client {
                 StakeBlockchain.CommitteeSize,
                 3 + 2,
             );
-        }, 6000));
+        }, 3100));
     }
 
     countReduceOne(round, step, T, tau, lambda) {
@@ -177,7 +176,7 @@ module.exports = class StakeClient extends Client {
                 StakeBlockchain.CommitteeSize,
                 hblock1,
             );
-        }, 6000));
+        }, 3100));
 
     }
 
@@ -209,7 +208,7 @@ module.exports = class StakeClient extends Client {
                 StakeBlockchain.CommitteeSize,
                 3 + 2,
             );
-        }, 6000));
+        }, 3100));
     }
 
     countReduceTwo(round, step, T, tau, lambda) {
@@ -255,7 +254,7 @@ module.exports = class StakeClient extends Client {
                 3 + 2,
             );
         },
-            6000));
+            3100));
     }
 
     countBinaryBAStarStageOne(round, step, T, tau, hblock, lambda) {
@@ -295,7 +294,7 @@ module.exports = class StakeClient extends Client {
                 this.log("[ BINARYBA* ] [ STAGE-1 ] Step: " + step + " Quorum reached. Hash: " + this.hblockStar);
                 this.timeouts.push(setTimeout(() => {
                     this.BAStar(round);
-                }, 6000));
+                }, 3100));
                 return;
             }
         }
@@ -325,7 +324,7 @@ module.exports = class StakeClient extends Client {
                 StakeBlockchain.CommitteeSize,
                 hblock,
                 3 + 2)
-        }, 6000));
+        }, 3100));
     }
 
     countBinaryBAStarStageTwo(round, step, T, tau, hblock, lambda) {
@@ -356,7 +355,7 @@ module.exports = class StakeClient extends Client {
                 this.log("[ BINARYBA* ] [ STAGE-2 ] Step: " + step + " Quorum reached. Hash: " + this.hblockStar);
                 this.timeouts.push(setTimeout(() => {
                     this.BAStar(round);
-                }, 6000));
+                }, 3100));
                 return;
             }
         }
@@ -386,7 +385,7 @@ module.exports = class StakeClient extends Client {
                 StakeBlockchain.CommitteeSize,
                 hblock,
                 3 + 2)
-        }, 6000));
+        }, 3100));
     }
 
     countBinaryBAStarStageThree(round, step, T, tau, hblock, lambda) {
@@ -556,7 +555,6 @@ module.exports = class StakeClient extends Client {
             return StakeBlockchain.TIMEOUT;
         } else {
             const msgs = this.incomingMsgs.get(round).get(step)[Symbol.iterator]();
-
             while (true) {
                 let m = msgs.next().value;
 
@@ -579,7 +577,7 @@ module.exports = class StakeClient extends Client {
 
     receiveVote(vote) {
         let { voter, round, step } = vote;
-        // this.log("Received vote from: ", voter);
+        // this.log("Received vote from: " + voter + " " + round + " " + step);
 
         if (!this.incomingMsgs.has(round)) {
             this.incomingMsgs.set(round, new Map());
@@ -594,6 +592,7 @@ module.exports = class StakeClient extends Client {
     addEmptyBlock() {
         this.log("Adding empty block!");
         this.currentBlock.rewardAddr = null;
+        this.currentBlock.seed = SGUtils.hash(Array.from(this.net.clients.keys()).join());
         this.timeouts.push(
             setTimeout(() => this.receiveBlock(this.currentBlock),
                 0
@@ -602,6 +601,8 @@ module.exports = class StakeClient extends Client {
 
     announceBlock() {
         this.log("Announcing block!");
+        let [newSeed, _] = utils.calcNewSeed(this.keyPair.getPrivate(), this.lastBlock.seed, this.currentBlock.chainLength);
+        this.currentBlock.seed = Buffer.from(newSeed).toString('hex');
         this.timeouts.push(setTimeout(() => {
             this.net.broadcast(StakeBlockchain.ANNOUNCE_BLOCK, this.currentBlock);
         }, 3000));
