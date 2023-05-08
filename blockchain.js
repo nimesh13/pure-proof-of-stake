@@ -11,7 +11,7 @@ const TERMINATE_PROPOSAL = 'TERMINATE_PROPOSAL';
 
 const SortitionThreshold = 2;
 const SortitionThresholdStep = 0.685;
-const SortitionThresholdFinal = 0.685;
+const SortitionThresholdFinal = 0.74;
 
 const REDUCTION_ONE = 'REDUCTION_ONE';
 const REDUCTION_TWO = 'REDUCTION_TWO';
