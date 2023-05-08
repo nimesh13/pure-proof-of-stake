@@ -11,12 +11,12 @@ console.log("Starting simulation.  This may take a moment...");
 let fakeNet = new FakeNet();
 
 // Clients
-let alice = new StakeClient({ name: "Alice", net: fakeNet, identity: 1 });
-let bob = new StakeClient({ name: "Bob", net: fakeNet, identity: 2 });
-let charlie = new StakeClient({ name: "Charlie", net: fakeNet, identity: 3 });
+let alice = new StakeClient({ name: "Alice", net: fakeNet });
+let bob = new StakeClient({ name: "Bob", net: fakeNet });
+let charlie = new StakeByzantineClient({ name: "Charlie", net: fakeNet });
 
 // Byzantine Client
-let trudy = new StakeByzantineClient({ name: "Trudy", net: fakeNet, identity: 4 });
+let trudy = new StakeByzantineClient({ name: "Trudy", net: fakeNet });
 
 let genesisSeed = "########## THIS IS GENESIS BLOCK SEED FOR CS298 ##########";
 
@@ -27,8 +27,8 @@ let genesis = StakeBlockchain.makeGenesis({
     clientBalanceMap: new Map([
         [alice, 15],
         [bob, 10],
-        [charlie, 7],
-        [trudy, 20],
+        [charlie, 20],
+        [trudy, 30],
     ]),
     seed: genesisSeed,
 });
