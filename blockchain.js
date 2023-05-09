@@ -43,6 +43,14 @@ module.exports = class StakeBlockchain extends Blockchain {
     static get TENATIVE_CONSENSUS() { return TENATIVE_CONSENSUS; }
     static get TIMEOUT() { return TIMEOUT; }
 
+    /**
+     * Extends the base class to produce a genesis block 
+     * and inserts the seed into it. 
+     * 
+     * @param  {...any} args - stores the seed in the block.
+     * 
+     * @returns {Block} - The genesis block.
+     */
     static makeGenesis(...args) {
         let g = super.makeGenesis(...args);
         g.seed = args[0]["seed"];
@@ -53,6 +61,13 @@ module.exports = class StakeBlockchain extends Blockchain {
         return new StakeBlockchain.cfg.blockClass(...args);
     }
 
+    /**
+     * Converts a string representation of a block to a new Block instance.
+     * 
+     * @param {Object} o - An object representing a block, but not necessarily an instance of Block.
+     * 
+     * @returns {Block}
+     */
     static deserializeBlock(o) {
         if (o instanceof StakeBlockchain.cfg.blockClass) {
             return o;
