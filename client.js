@@ -290,6 +290,14 @@ module.exports = class StakeClient extends Client {
         }, 0));
     }
 
+    /**
+     * Performs the first stage of Binary BA* algorithm.
+     * Clients vote for the block hash.
+     * 
+     * @param {Number} round - the current round number.
+     * @param {String} hblock - the block hash passed on from reduction.
+     * @param {Number} step - the current step of the given round.
+     */
     binaryBAStarStageOne(round, hblock, step = 1) {
         this.timeouts.shift();
         let r = hblock;
@@ -315,6 +323,17 @@ module.exports = class StakeClient extends Client {
             3100));
     }
 
+    /**
+     * Count the votes in the first stage of BinaryBA*.
+     * Resets the block hash to original value or votes FINAL and exits.
+     * 
+     * @param {Number} round - the current round number.
+     * @param {Number} step - the current step for the given round.
+     * @param {Number} T - the sortition threshold for the current step.
+     * @param {Number} tau - committee size for the given step to declare majority.
+     * @param {String} hblock - block hash passed on from reduction.
+     * @param {Number} lambda - the time clients should wait to receive all votes before counting. 
+     */
     countBinaryBAStarStageOne(round, step, T, tau, hblock, lambda) {
         this.timeouts.shift();
         let emptyHash = SGUtils.hash(round + this.currentBlock.prevBlockHash);
@@ -363,6 +382,15 @@ module.exports = class StakeClient extends Client {
         ));
     }
 
+    /**
+     * The second stage of BinaryBA* where the clients vote again
+     * for the block hash.
+     * 
+     * @param {Number} round - the current round number.
+     * @param {String} r - the block hash from stage-2 of BinaryBA*.
+     * @param {String} hblock - the original block hash from reduction phase.
+     * @param {Number} step - the current step for the given round.
+     */
     binaryBAStarStageTwo(round, r, hblock, step) {
         this.timeouts.shift();
         this.log("[ BINARYBA* ] [ STAGE-2 ] Step: " + step + " Voting...");
@@ -385,6 +413,18 @@ module.exports = class StakeClient extends Client {
         }, 3100));
     }
 
+    /**
+     * Counts the votes from the second stage of BinaryBA*.
+     * Sets the block hash to empty hash for the next stage or votes three times 
+     * before exiting.
+     * 
+     * @param {Number} round - the current round number.
+     * @param {Number} step - the current step for the given round.
+     * @param {Number} T - the sortition threshold for the current step.
+     * @param {Number} tau - committee size for the given step to declare majority.
+     * @param {String} hblock - the original block hash from reduction phase.
+     * @param {Number} lambda - the time clients should wait to receive all votes before counting.
+     */
     countBinaryBAStarStageTwo(round, step, T, tau, hblock, lambda) {
         this.timeouts.shift();
         let emptyHash = SGUtils.hash(round + this.currentBlock.prevBlockHash);
@@ -424,6 +464,15 @@ module.exports = class StakeClient extends Client {
         ));
     }
 
+    /**
+     * Clients vote in the third stage of BinaryBA* for the 
+     * hash realised from the second stage. 
+     * 
+     * @param {Number} round - the current round number.
+     * @param {String} r - the hash from the second stage of BinaryBA*.
+     * @param {String} hblock - the original block hash from reduction phase.
+     * @param {Number} step - the current step for the given round. 
+     */
     binaryBAStarStageThree(round, r, hblock, step) {
         this.timeouts.shift();
         this.log("[ BINARYBA* ] [ STAGE-3 ] Step: " + step + " Voting...");
@@ -446,6 +495,19 @@ module.exports = class StakeClient extends Client {
         }, 3100));
     }
 
+    /**
+     * Count votes in the third stage of BinaryBA*.
+     * Reset the block hash for the next stage based on the 
+     * common coin algorithm. If step has reached MAXSTEPS,
+     * client hangs forever.
+     * 
+     * @param {Number} round - the current round number.
+     * @param {Number} step - the current step for the given round.
+     * @param {Number} T - the sortition threshold for the current step.
+     * @param {Number} tau - committee size for the given step to declare majority.
+     * @param {String} hblock - the original block hash from reduction phase.
+     * @param {Number} lambda - the time clients should wait to receive all votes before counting.
+     */
     countBinaryBAStarStageThree(round, step, T, tau, hblock, lambda) {
         this.timeouts.shift();
         let emptyHash = SGUtils.hash(round + this.currentBlock.prevBlockHash);
@@ -476,6 +538,16 @@ module.exports = class StakeClient extends Client {
         }
     }
 
+    /**
+     * Implements the CommonCoin algorithm in the original
+     * paper. Finds the minimum block hash and returns its LSB.
+     * 
+     * @param {Number} round - the current round number.
+     * @param {Number} step - the current step for the given round.
+     * @param {Number} tau - committee size for the given step to declare majority.
+     * 
+     * @returns {Number} - the least significant bit of the minimum hash.
+     */
     commonCoin(round, step, tau) {
         let minHash = new BigInteger("2").pow(32 * 8);
         if (this.incomingMsgs.has(round) && this.incomingMsgs.get(round).has(step)) {
@@ -495,6 +567,13 @@ module.exports = class StakeClient extends Client {
         return minHash % 2;
     }
 
+    /**
+     * The main method for deciding consensus - tentative or final.
+     * Counts votes for the FINAL step and decides to publish a block
+     * or an empty block.
+     * 
+     * @param {Number} round - the current round number.
+     */
     BAStar(round) {
         this.timeouts.shift();
         let emptyHash = SGUtils.hash(round + this.currentBlock.prevBlockHash);
@@ -525,6 +604,18 @@ module.exports = class StakeClient extends Client {
         return;
     }
 
+    /**
+     * Implements the voting logic used by clients in all 
+     * the stages and steps of the BA consensus protocol. 
+     * Sortition is used to determine if the client is
+     * selected as the committee member to vote. If else, 
+     * client broadcasts a vote.
+     * 
+     * @param {Number} round - the current round number.
+     * @param {Number} step - the current step for the given round.
+     * @param {Number} tau - committee size for the given step to declare majority.
+     * @param {String} value - the block hash for which the vote is being cast.
+     */
     committeeVote(round, step, tau, value) {
 
         // check if user is in committee using Sortition
@@ -565,6 +656,16 @@ module.exports = class StakeClient extends Client {
         }
     }
 
+    /**
+     * Verifies all the receives votes from the network.
+     * Also detects fork where the last block is not same as the
+     * current client and throws an error.
+     * 
+     * @param {Number} tau - committee size for the given step to declare majority.
+     * @param {Object} m - the vote broadcast by the committee members. 
+     * 
+     * @returns {Array} - the winning tokens, the sortition hash and the block hash.
+     */
     processMsg(tau, m) {
         let { pk, msg, sig } = m;
 
@@ -605,6 +706,20 @@ module.exports = class StakeClient extends Client {
         return [j, value, sorthash];
     }
 
+    /**
+     * The main method which counts the votes received for
+     * a hash value in a given step and round number. Either 
+     * results into a TIMEOUT if no value has a clear majority 
+     * else returns that block hash.
+     * 
+     * @param {Number} round - the current round number.
+     * @param {Number} step - the current step for the given round.
+     * @param {Number} T - the sortition threshold for the current step.
+     * @param {Number} tau - committee size for the given step to declare majority.
+     * @param {Number} lambda - the time clients should wait to receive all votes before counting.
+     * 
+     * @returns {String} - either TIMEOUT or the block hash that has the majority.
+     */
     countVotes(round, step, T, tau, lambda) {
         let counts = {};
         let voters = new Set();
@@ -633,6 +748,12 @@ module.exports = class StakeClient extends Client {
         }
     }
 
+    /**
+     * Stores the votes for a given step and round number in a 
+     * message buffer, incomingMsgs.
+     * 
+     * @param {Object} vote - the vote object received from the network.
+     */
     receiveVote(vote) {
         let { voter, round, step } = vote;
         // this.log("Received vote from: " + voter + " " + round + " " + step);
@@ -647,6 +768,9 @@ module.exports = class StakeClient extends Client {
         this.incomingMsgs.get(round).get(step).push(vote);
     }
 
+    /**
+     * Adds an empty block to the blockchain.
+     */
     addEmptyBlock() {
         this.log("Adding empty block!");
         this.currentBlock.rewardAddr = null;
@@ -657,6 +781,11 @@ module.exports = class StakeClient extends Client {
             ));
     }
 
+    /**
+     * The block proposer announces their block in case a 
+     * final or tentative consensus is reached. They calculate the 
+     * seed for the next round too.
+     */
     announceBlock() {
         this.log("Announcing block!");
         let [newSeed, _] = utils.calcNewSeed(this.keyPair.getPrivate(), this.lastBlock.seed, this.currentBlock.chainLength);
@@ -666,6 +795,13 @@ module.exports = class StakeClient extends Client {
         }, 3000));
     }
 
+    /**
+     * Receives the block from the proposer and verifies it 
+     * and adds to the blockchain. If it's a final block, all
+     * previous tentative blocks are finalised.
+     * 
+     * @param {Block} block - the block received from the proposer.
+     */
     receiveBlock(block) {
         this.timeouts.shift();
         block = StakeBlockchain.deserializeBlock(block);
@@ -718,11 +854,19 @@ module.exports = class StakeClient extends Client {
         this.lastConfirmedBlock = this.lastBlock;
     }
 
+    /**
+     * Initiate request to terminate all clients who are working.
+     * Broadcasts a termination request.
+     */
     endAll() {
         this.log('Initiating Termination.');
         this.net.broadcast(StakeBlockchain.TERMINATE_PROPOSAL, {});
     }
 
+    /**
+     * The termination request clears all timeouts for all
+     * clients making them stop.
+     */
     terminateProposal() {
         this.log('Received Termination Request.');
         for (const timeoutId of this.timeouts) {
@@ -732,6 +876,12 @@ module.exports = class StakeClient extends Client {
         return;
     }
 
+    /**
+     * Custom logger for the clients which also prints 
+     * their name.
+     * 
+     * @param {String} msg - the message string to be logged.
+     */
     log(msg) {
         let name = this.name || this.address.substring(0, 10);
 
