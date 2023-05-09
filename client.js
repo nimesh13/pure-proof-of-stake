@@ -8,8 +8,25 @@ const BigInteger = require('jsbn').BigInteger;
 const elliptic = require('elliptic');
 const EC = new elliptic.ec('secp256k1');
 
+/**
+ * A client has a public/private keypair and an address.
+ * It can send and receive messages on the Blockchain network.
+ */
 module.exports = class StakeClient extends Client {
 
+    /**
+     * Sets up the event listeners for the clients and 
+     * initialises a few parameters for them:
+     * 
+     * 1. proposals - object to store all the block proposals.
+     * 2. ctx - to store the context of the blockchain.
+     * 3. incomingMsgs - message buffer to store all votes for
+     * a given round and step.
+     * 4. timeouts - this tracks all setTimeouts so they can be cleared
+     * and removed when the client needs to be terminated.
+     * 
+     * @param  {...any} args - for the base class.
+     */
     constructor(...args) {
         super(...args);
 
